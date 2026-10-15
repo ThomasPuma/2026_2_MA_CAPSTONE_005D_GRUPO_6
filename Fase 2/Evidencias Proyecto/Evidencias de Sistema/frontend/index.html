@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matteo Masas - Amasandería Tradicional</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="main-header">
+    <div class="logo">🥖 Matteo Masas</div>
+    <button class="cart-btn" id="btn-cart">🛒 Ver Carrito (<span id="cart-count">0</span>)</button>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h2>Catálogo de Masas Frescas</h2>
+      <p>Selecciona tus productos para retiro en local o despacho.</p>
+    </section>
+
+    <!-- Grilla donde app.js inyectará los productos desde la API -->
+    <section class="grid-productos" id="grid-productos">
+      <p class="loading">Cargando masas disponibles...</p>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
