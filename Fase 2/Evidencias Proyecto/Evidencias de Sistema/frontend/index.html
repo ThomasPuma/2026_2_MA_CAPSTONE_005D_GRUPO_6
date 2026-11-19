@@ -3,29 +3,622 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matteo Masas - Amasandería Tradicional</title>
+  <title>Matteo Masas · Amasandería artesanal por pedido</title>
+  <meta
+    name="description"
+    content="Panes, masas y dulces hechos a mano por encargo. Elige tus productos, reserva tu fecha de entrega y coordina el retiro en el local o el despacho a domicilio."
+  >
+  <meta name="theme-color" content="#FBF5EA">
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="apple-touch-icon" href="images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&amp;family=Nunito+Sans:wght@300..800&amp;display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-  <header class="main-header">
-    <div class="logo">🥖 Matteo Masas</div>
-    <button class="cart-btn" id="btn-cart">🛒 Ver Carrito (<span id="cart-count">0</span>)</button>
+  <a class="sr-only" href="#catalogo">Saltar al catálogo</a>
+
+  <header class="main-header site-header">
+    <div class="header-inner">
+      <a class="logo" href="/" aria-label="Matteo Masas - Inicio">
+        <img
+          class="logo-img"
+          src="images/logomatteomasas.png"
+          alt="Matteo Masas - Amasandería Tradicional"
+        >
+        <span class="logo-texto">
+          <span class="logo-nombre">Matteo Masas</span>
+          <span class="logo-tagline">Amasandería artesanal</span>
+        </span>
+      </a>
+
+      <nav class="nav-principal" id="nav-principal" aria-label="Secciones de la tienda">
+        <a href="#catalogo">Catálogo</a>
+        <a href="#como-pedir">Cómo pedir</a>
+        <a href="#nosotros">Nosotros</a>
+      </nav>
+
+      <button
+        class="cart-btn"
+        id="btn-cart"
+        type="button"
+        aria-haspopup="dialog"
+        aria-controls="cart-drawer"
+        aria-label="Ver carrito"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.4a2 2 0 0 0 2-1.6L20 8H6"></path>
+          <circle cx="9.5" cy="20" r="1.2"></circle>
+          <circle cx="17.5" cy="20" r="1.2"></circle>
+        </svg>
+        <span class="cart-btn-texto">Ver carrito</span>
+        <span class="cart-badge" id="cart-count">0</span>
+      </button>
+
+      <button
+        class="nav-toggle"
+        id="btn-nav"
+        type="button"
+        aria-label="Abrir menú"
+        aria-expanded="false"
+        aria-controls="nav-principal"
+      >
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
   </header>
 
-  <main class="container">
+  <main>
+    <!-- ===================== PORTADA ===================== -->
     <section class="hero">
-      <h2>Catálogo de Masas Frescas</h2>
-      <p>Selecciona tus productos para retiro en local o despacho.</p>
+      <div class="container hero-inner">
+        <div class="hero-texto">
+          <span class="hero-etiqueta">Amasandería artesanal por pedido</span>
+          <h1>Masas frescas, <em>hechas a mano</em> para tu mesa</h1>
+          <p class="hero-descripcion">
+            Panes, masas y dulces preparados en tandas pequeñas, con la calma de
+            una cocina de barrio. Elige tus favoritos, reserva tu día y nosotros
+            amasamos para ti.
+          </p>
+
+          <div class="hero-acciones">
+            <a class="btn-primario btn-auto" href="#catalogo">
+              Ver el catálogo
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14"></path>
+                <path d="m13 6 6 6-6 6"></path>
+              </svg>
+            </a>
+            <a class="btn-secundario" href="#como-pedir">¿Cómo funciona?</a>
+          </div>
+
+          <p class="hero-nota" id="info-pedidos">Cargando agenda de pedidos…</p>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <figure class="hero-foto hero-foto--principal">
+            <img src="images/PanCompletos.jpg" alt="" loading="eager">
+          </figure>
+          <figure class="hero-foto hero-foto--secundaria">
+            <img src="images/MiniDonas.jpg" alt="" loading="lazy">
+          </figure>
+          <div class="hero-sello">
+            <span class="hero-sello-icono">🌾</span>
+            <span>
+              Hecho a mano<br>
+              <strong>por encargo</strong>
+            </span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- Grilla donde app.js inyectará los productos desde la API -->
-    <section class="grid-productos" id="grid-productos">
-      <p class="loading">Cargando masas disponibles...</p>
+    <!-- ===================== FRANJA DE CONFIANZA ===================== -->
+    <section class="franja" aria-label="Nuestra forma de trabajar">
+      <div class="container franja-inner">
+        <div class="franja-item">
+          <span class="franja-icono" aria-hidden="true">🌾</span>
+          <div>
+            <strong>Amasado a mano</strong>
+            <span>En tandas pequeñas, sin apuro y con cariño.</span>
+          </div>
+        </div>
+        <div class="franja-item">
+          <span class="franja-icono" aria-hidden="true">🧺</span>
+          <div>
+            <strong>Todo por encargo</strong>
+            <span>Sin stock: se hornea para la fecha que elijas.</span>
+          </div>
+        </div>
+        <div class="franja-item">
+          <span class="franja-icono" aria-hidden="true">🚚</span>
+          <div>
+            <strong>Retiro o despacho</strong>
+            <span id="promo-despacho-texto">Despacho gratis sobre $15.000 dentro de Padre Hurtado.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== CATÁLOGO ===================== -->
+    <section class="seccion catalogo" id="catalogo">
+      <div class="container">
+        <header class="seccion-header">
+          <span class="seccion-etiqueta">Nuestro catálogo</span>
+          <h2>Elige tus masas favoritas</h2>
+          <p>
+            Cada producto se prepara por encargo. Los precios corresponden al
+            formato indicado: paquete, kilo o bandeja.
+          </p>
+        </header>
+
+        <div class="buscador-catalogo" role="search">
+          <label class="buscador-campo">
+            <span class="sr-only">Buscar productos</span>
+            <input
+              type="search"
+              id="buscar-producto"
+              maxlength="60"
+              autocomplete="off"
+              placeholder="Buscar: completo, masa frita, cupcakes…"
+            >
+          </label>
+          <p class="buscador-resultado" id="buscador-resultado" aria-live="polite"></p>
+        </div>
+
+        <section class="filtros" id="filtros" aria-label="Filtrar productos">
+          <button class="filtro-btn activo" type="button" data-filtro="todos" aria-pressed="true">
+            Todos
+          </button>
+          <button class="filtro-btn" type="button" data-filtro="panes" aria-pressed="false">
+            Panes
+          </button>
+          <button class="filtro-btn" type="button" data-filtro="masas" aria-pressed="false">
+            Masas
+          </button>
+          <button class="filtro-btn" type="button" data-filtro="dulces" aria-pressed="false">
+            Dulces
+          </button>
+        </section>
+
+        <!-- Grilla donde app.js inyectará los productos desde la API -->
+        <section class="grid-productos" id="grid-productos">
+          <p class="loading">Cargando masas disponibles…</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- ===================== CÓMO PEDIR ===================== -->
+    <section class="seccion como-pedir" id="como-pedir">
+      <div class="container">
+        <header class="seccion-header">
+          <span class="seccion-etiqueta">Por encargo</span>
+          <h2>Pedir es simple</h2>
+          <p>
+            No necesitas crear una cuenta. Con tres pasos dejamos tu pedido
+            agendado y coordinamos todo contigo.
+          </p>
+        </header>
+
+        <ol class="pasos">
+          <li class="paso">
+            <span class="paso-numero">01</span>
+            <h3>Arma tu pedido</h3>
+            <p>
+              Recorre el catálogo y agrega tus masas favoritas al carrito, en el
+              formato que prefieras.
+            </p>
+          </li>
+          <li class="paso">
+            <span class="paso-numero">02</span>
+            <h3>Reserva tu fecha</h3>
+            <p>
+              Elige el día de entrega o retiro según los cupos disponibles. Cada
+              día tiene una capacidad limitada.
+            </p>
+          </li>
+          <li class="paso">
+            <span class="paso-numero">03</span>
+            <h3>Confirma con nosotros</h3>
+            <p>
+              La dueña te contactará para coordinar el pago, el retiro en el
+              local o el despacho a domicilio.
+            </p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ===================== NOSOTROS ===================== -->
+    <section class="seccion nosotros" id="nosotros">
+      <div class="container nosotros-inner">
+        <figure class="nosotros-foto">
+          <img
+            src="images/MasasHorno.jpg"
+            alt="Masas extendidas sobre una tabla de madera, listas para hornear"
+            loading="lazy"
+          >
+        </figure>
+
+        <div class="nosotros-texto">
+          <span class="seccion-etiqueta">Hecho en casa</span>
+          <h2>La misma receta, el mismo cariño de siempre</h2>
+          <p>
+            En Matteo Masas amasamos a mano y en tandas pequeñas. No trabajamos
+            con stock: cada pedido se prepara con calma para que llegue fresco a
+            tu mesa, como recién salido del horno.
+          </p>
+          <ul class="nosotros-lista">
+            <li>Ingredientes simples, elegidos con cuidado.</li>
+            <li>Cada pedido se hornea para tu fecha.</li>
+            <li>Trato directo, de vecina a vecina.</li>
+          </ul>
+        </div>
+      </div>
     </section>
   </main>
 
+  <!-- ===================== PIE DE PÁGINA ===================== -->
+  <footer class="site-footer" id="contacto">
+    <div class="container footer-cta">
+      <div>
+        <span class="seccion-etiqueta">Hagamos tu pedido</span>
+        <h2>El aroma del pan recién hecho, en tu mesa</h2>
+      </div>
+      <a class="btn-primario btn-auto" href="#catalogo">
+        Elegir mis masas
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14"></path>
+          <path d="m13 6 6 6-6 6"></path>
+        </svg>
+      </a>
+    </div>
+
+    <div class="container footer-grid">
+      <div class="footer-marca">
+        <a class="logo footer-logo" href="/" aria-label="Matteo Masas - Inicio">
+          <img
+            class="logo-img"
+            src="images/logomatteomasas.png"
+            alt=""
+          >
+          <span class="logo-texto">Matteo Masas</span>
+        </a>
+        <p>
+          Amasandería artesanal de barrio. Panes, masas y dulces preparados por
+          encargo, con recetas de casa y atención cercana.
+        </p>
+        <p class="footer-hecho">Hecho a mano · Chile</p>
+      </div>
+
+      <nav class="footer-col" aria-label="Catálogo">
+        <h3>Catálogo</h3>
+        <ul>
+          <li><a href="#catalogo" data-filtro-link="todos">Todos</a></li>
+          <li><a href="#catalogo" data-filtro-link="panes">Panes</a></li>
+          <li><a href="#catalogo" data-filtro-link="masas">Masas</a></li>
+          <li><a href="#catalogo" data-filtro-link="dulces">Dulces</a></li>
+        </ul>
+      </nav>
+
+      <nav class="footer-col" aria-label="Tu pedido">
+        <h3>Tu pedido</h3>
+        <ul>
+          <li><a href="#como-pedir">Cómo pedir</a></li>
+          <li><a href="#catalogo">Hacer un pedido</a></li>
+          <li><a href="#nosotros">Sobre nosotros</a></li>
+        </ul>
+      </nav>
+
+      <div class="footer-col">
+        <h3>Coordinación</h3>
+        <ul>
+          <li>Retiro en el local<small>Sin costo de despacho</small></li>
+          <li>Despacho a domicilio<small>Tarifa según distancia</small></li>
+          <li>Efectivo, tarjeta online o transferencia<small>Pagas al recibir o con Webpay</small></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>© 2026 Matteo Masas. Todos los derechos reservados.</p>
+      <p>Amasandería artesanal de barrio · Pedidos por encargo</p>
+    </div>
+  </footer>
+
+  <!-- ===================== CARRITO / CHECKOUT ===================== -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+
+  <aside
+    class="cart-drawer"
+    id="cart-drawer"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cart-title"
+    aria-hidden="true"
+    inert
+  >
+    <header class="cart-header">
+      <div>
+        <h2 id="cart-title">Tu pedido</h2>
+        <p class="cart-subtitle" id="cart-subtitle">Productos seleccionados</p>
+      </div>
+      <button class="icon-btn" id="btn-cerrar-carrito" type="button" aria-label="Cerrar carrito">
+        ✕
+      </button>
+    </header>
+
+    <div class="cart-body" id="cart-body">
+      <!-- PASO 1: CARRITO -->
+      <section class="cart-paso" id="cart-paso-carrito">
+        <div class="cart-vacio" id="cart-vacio">
+          <span aria-hidden="true">🛒</span>
+          <h3>Tu carrito está vacío</h3>
+          <p>Agrega tus productos favoritos para comenzar el pedido.</p>
+        </div>
+
+        <ul class="cart-items" id="cart-items" aria-live="polite"></ul>
+
+        <div class="cart-resumen" id="cart-resumen" hidden>
+          <div class="cart-resumen-linea">
+            <span>Subtotal</span>
+            <strong id="cart-subtotal">$0</strong>
+          </div>
+          <p class="cart-ayuda">El costo de despacho se calcula en el siguiente paso.</p>
+          <button class="btn-primario" id="btn-continuar" type="button">
+            Continuar con mis datos
+          </button>
+        </div>
+      </section>
+
+      <!-- PASO 2: DATOS DEL PEDIDO -->
+      <section class="cart-paso" id="cart-paso-datos" hidden>
+        <button class="btn-volver" id="btn-volver-carrito" type="button">
+          ← Volver al carrito
+        </button>
+
+        <form class="checkout-form" id="checkout-form" novalidate>
+          <p class="checkout-aviso" id="checkout-aviso-pago" role="alert" hidden></p>
+
+          <div class="form-grid">
+            <label class="campo">
+              <span>Nombre completo *</span>
+              <input
+                type="text"
+                id="cliente-nombre"
+                name="nombre"
+                autocomplete="name"
+                maxlength="150"
+                required
+                placeholder="Ej: María Pérez"
+              >
+            </label>
+
+            <label class="campo">
+              <span>Teléfono de contacto *</span>
+              <input
+                type="tel"
+                id="cliente-telefono"
+                name="telefono"
+                autocomplete="tel"
+                maxlength="25"
+                required
+                placeholder="+56 9 1234 5678"
+              >
+            </label>
+
+            <label class="campo">
+              <span>Email (opcional)</span>
+              <input
+                type="email"
+                id="cliente-email"
+                name="email"
+                autocomplete="email"
+                maxlength="150"
+                placeholder="tucorreo@ejemplo.cl"
+              >
+            </label>
+          </div>
+
+          <fieldset class="campo-grupo">
+            <legend>¿Cómo recibes tu pedido? *</legend>
+            <div class="opciones">
+              <label class="opcion">
+                <input type="radio" name="tipo_entrega" value="retiro" checked>
+                <span>
+                  <strong>Retiro en el local</strong>
+                  <small>Sin costo de despacho</small>
+                </span>
+              </label>
+              <label class="opcion">
+                <input type="radio" name="tipo_entrega" value="despacho">
+                <span>
+                  <strong>Despacho a domicilio</strong>
+                  <small>Calculamos el costo con tu dirección</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="campo campo-mapa" id="campo-direccion" hidden>
+            <span class="mapa-etiqueta">Dirección de entrega *</span>
+            <p class="campo-ayuda">
+              Busca tu dirección, elige una sugerencia y ajusta el marcador en
+              el mapa si hace falta.
+            </p>
+
+            <div class="mapa-buscador">
+              <input
+                type="text"
+                id="buscar-direccion"
+                autocomplete="off"
+                maxlength="150"
+                placeholder="Ej: Av. Pedro Aguirre Cerda 1234"
+                aria-label="Buscar dirección de entrega"
+              >
+              <button class="btn-secundario" id="btn-buscar-direccion" type="button">
+                Buscar
+              </button>
+            </div>
+
+            <div
+              class="mapa-resultados"
+              id="mapa-resultados"
+              role="listbox"
+              aria-label="Resultados de la búsqueda"
+              hidden
+            ></div>
+
+            <div
+              class="mapa-entrega"
+              id="mapa-entrega"
+              aria-label="Mapa para seleccionar la dirección de entrega"
+            ></div>
+
+            <div class="mapa-acciones">
+              <button class="btn-secundario" id="btn-usar-ubicacion" type="button">
+                📍 Usar mi ubicación
+              </button>
+            </div>
+
+            <p class="mapa-seleccion" id="direccion-seleccionada">
+              Aún no has seleccionado una dirección.
+            </p>
+            <p class="campo-ayuda" id="mapa-ayuda"></p>
+
+            <input type="hidden" id="cliente-direccion" name="direccion">
+            <input type="hidden" id="cliente-lat" name="lat">
+            <input type="hidden" id="cliente-lng" name="lng">
+          </div>
+
+          <label class="campo">
+            <span>Fecha de entrega o retiro *</span>
+            <select id="cliente-fecha" name="fecha_entrega" required>
+              <option value="">Selecciona una fecha</option>
+            </select>
+            <small class="campo-ayuda" id="cupo-fecha"></small>
+          </label>
+
+          <fieldset class="campo-grupo">
+            <legend>Forma de pago *</legend>
+            <div class="opciones opciones-pago">
+              <label class="opcion" id="opcion-pago-efectivo">
+                <input type="radio" name="metodo_pago" value="efectivo" checked>
+                <span>
+                  <strong>Efectivo</strong>
+                  <small>Pagas al recibir o retirar</small>
+                </span>
+              </label>
+              <label class="opcion" id="opcion-pago-tarjeta">
+                <input type="radio" name="metodo_pago" value="tarjeta">
+                <span>
+                  <strong>Tarjeta presencial</strong>
+                  <small>Pagas con tarjeta al recibir o retirar</small>
+                </span>
+              </label>
+              <label class="opcion" id="opcion-pago-webpay" hidden>
+                <input type="radio" name="metodo_pago" value="webpay" disabled>
+                <span>
+                  <strong>Tarjeta online (Webpay)</strong>
+                  <small>Te redirigimos a Webpay al confirmar</small>
+                </span>
+              </label>
+              <label class="opcion" id="opcion-pago-transferencia">
+                <input type="radio" name="metodo_pago" value="transferencia">
+                <span>
+                  <strong>Transferencia</strong>
+                  <small>Te enviamos los datos</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <p class="campo-ayuda" id="metodos-pago-ayuda"></p>
+
+          <div class="abono-aviso" id="abono-aviso" hidden></div>
+
+          <div class="webpay-pruebas" id="webpay-pruebas" hidden>
+            <strong>Datos para probar Webpay</strong>
+            <p>Solo en ambiente de pruebas: no se cobra dinero real.</p>
+            <ul>
+              <li>
+                VISA aprobada: <code>4051 8856 0044 6623</code> · CVV
+                <code>123</code> · vencimiento futuro.
+              </li>
+              <li>
+                Mastercard rechazada: <code>5186 0595 5959 0568</code> · CVV
+                <code>123</code>.
+              </li>
+              <li>
+                Autenticación banco: RUT <code>11.111.111-1</code> · clave
+                <code>123</code>.
+              </li>
+            </ul>
+          </div>
+
+          <label class="campo">
+            <span>Indicaciones especiales (opcional)</span>
+            <textarea
+              id="cliente-notas"
+              name="notas"
+              rows="3"
+              maxlength="500"
+              placeholder="Ej: tocar timbre, sin aceitunas, dejar en conserjería..."
+            ></textarea>
+          </label>
+
+          <div class="checkout-resumen" id="checkout-resumen" aria-live="polite"></div>
+
+          <button class="btn-primario btn-enviar" id="btn-enviar-pedido" type="submit">
+            Enviar pedido
+          </button>
+          <p class="form-legal">
+            Al enviar tu pedido, la dueña se contactará contigo para confirmar
+            disponibilidad, pago y entrega. No necesitas crear una cuenta.
+          </p>
+        </form>
+      </section>
+
+      <!-- PASO 3: PEDIDO RECIBIDO -->
+      <section class="cart-paso" id="cart-paso-exito" hidden>
+        <div class="exito">
+          <div class="exito-icono" aria-hidden="true">✅</div>
+          <h3>¡Pedido recibido!</h3>
+          <p>
+            Guarda tu código de pedido. La dueña se contactará contigo para
+            confirmarlo.
+          </p>
+
+          <div class="exito-codigo">
+            <span>Código de pedido</span>
+            <strong id="exito-codigo">—</strong>
+          </div>
+
+          <div class="exito-detalle" id="exito-detalle"></div>
+
+          <p class="exito-nota" id="exito-nota-pago"></p>
+
+          <button class="btn-primario" id="btn-nuevo-pedido" type="button">
+            Hacer otro pedido
+          </button>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="js/cart.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

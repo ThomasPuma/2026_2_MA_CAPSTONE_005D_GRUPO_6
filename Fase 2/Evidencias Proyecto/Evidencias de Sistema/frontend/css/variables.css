@@ -1,9 +1,38 @@
 :root {
-  --bg-principal: #FDFBF7;
-  --bg-card: #FFFFFF;
-  --color-primario: #8D6E63;
-  --color-acento: #D84315;
-  --color-texto: #3E2723;
-  --color-borde: #E0D7D5;
-  --fuente-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  /* ============================================================
+     PALETA CÁLIDA — amasandería de barrio
+     ============================================================ */
+  --bg-principal: #FBF5EA;
+  --bg-card: #FFFDF9;
+  --bg-suave: #F6EDDE;
+  --bg-crema: #FDF8F0;
+
+  --color-primario: #7A4B2E;
+  --color-primario-oscuro: #3E2A1E;
+  --color-acento: #C05630;
+  --color-acento-oscuro: #A4461F;
+  --color-dorado: #DFAE6A;
+
+  --color-texto: #3B2A21;
+  --color-texto-suave: #6F5747;
+  --color-borde: #E7D8C3;
+  --color-borde-suave: #F0E5D5;
+
+  /* ============================================================
+     TIPOGRAFÍA
+     ============================================================ */
+  --fuente-base: 'Nunito Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --fuente-titulo: 'Fraunces', Georgia, 'Times New Roman', serif;
+
+  /* ============================================================
+     FORMAS, SOMBRAS Y MOVIMIENTO
+     ============================================================ */
+  --radio-sm: 10px;
+  --radio-md: 16px;
+  --radio-lg: 24px;
+  --sombra-suave: 0 14px 34px -24px rgba(62, 42, 30, 0.45);
+  --sombra-card: 0 2px 4px rgba(62, 42, 30, 0.04),
+    0 18px 38px -30px rgba(62, 42, 30, 0.5);
+  --transicion: 180ms ease;
+  --ancho-max: 1160px;
 }

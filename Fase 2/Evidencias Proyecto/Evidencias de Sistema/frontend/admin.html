@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administración - Matteo Masas</title>
+  <link rel="icon" type="image/png" href="images/favicon.png">
+  <link rel="apple-touch-icon" href="images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&amp;family=Nunito+Sans:wght@300..800&amp;display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+
+  <header class="main-header admin-header">
+    <div class="logo">
+      <img
+        class="logo-img"
+        src="images/logomatteomasas.png"
+        alt="Matteo Masas - Amasandería Tradicional"
+      >
+      <span class="logo-texto">Administración</span>
+    </div>
+    <div class="admin-header-acciones">
+      <a class="admin-link" href="/">Ver tienda</a>
+      <button class="cart-btn" id="btn-refrescar" type="button">Actualizar</button>
+    </div>
+  </header>
+
+  <main class="container admin-container">
+    <nav class="admin-tabs" role="tablist" aria-label="Secciones del panel">
+      <button
+        class="admin-tab activo"
+        id="tab-pedidos"
+        type="button"
+        role="tab"
+        aria-selected="true"
+        aria-controls="vista-pedidos"
+        data-vista="pedidos"
+      >
+        Pedidos
+      </button>
+      <button
+        class="admin-tab"
+        id="tab-productos"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="vista-productos"
+        data-vista="productos"
+      >
+        Productos
+      </button>
+      <button
+        class="admin-tab"
+        id="tab-configuracion"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        aria-controls="vista-configuracion"
+        data-vista="configuracion"
+      >
+        Configuración
+      </button>
+    </nav>
+
+    <!-- ===================== PEDIDOS ===================== -->
+    <div class="admin-vista" id="vista-pedidos" role="tabpanel" aria-labelledby="tab-pedidos">
+      <section class="admin-hero">
+        <div>
+          <span class="hero-etiqueta">Panel interno</span>
+          <h2>Pedidos del día</h2>
+          <p>
+            Revisa los pedidos recibidos, actualiza su estado y ajusta el cupo
+            diario según tu capacidad de trabajo.
+          </p>
+        </div>
+      </section>
+
+      <section class="admin-resumen" id="admin-resumen" aria-live="polite">
+        <p class="admin-cargando">Cargando resumen…</p>
+      </section>
+
+      <p class="admin-sync" id="admin-sync" aria-live="polite"></p>
+
+      <section class="admin-panel">
+        <div class="admin-toolbar">
+          <label class="campo campo-fecha">
+            <span>Fecha de entrega</span>
+            <input type="date" id="filtro-fecha">
+          </label>
+
+          <div class="admin-botones-fecha">
+            <button class="filtro-btn" id="btn-hoy" type="button">Hoy</button>
+            <button class="filtro-btn" id="btn-manana" type="button">Mañana</button>
+          </div>
+
+          <label class="campo campo-estado">
+            <span>Filtrar por estado</span>
+            <select id="filtro-estado">
+              <option value="todos">Todos</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="confirmado">Confirmados</option>
+              <option value="en_preparacion">En preparación</option>
+              <option value="listo">Listos</option>
+              <option value="entregado">Entregados</option>
+              <option value="cancelado">Cancelados</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="admin-pedidos" id="admin-pedidos">
+          <p class="admin-cargando">Cargando pedidos…</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===================== PRODUCTOS ===================== -->
+    <div class="admin-vista oculto" id="vista-productos" role="tabpanel" aria-labelledby="tab-productos">
+      <section class="admin-hero">
+        <div>
+          <span class="hero-etiqueta">Catálogo</span>
+          <h2>Productos y precios</h2>
+          <p>
+            Crea nuevos productos, edita sus formatos y precios, y activa o
+            desactiva lo que se muestra en la tienda.
+          </p>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <div class="admin-toolbar">
+          <label class="campo campo-buscar">
+            <span>Buscar</span>
+            <input
+              type="search"
+              id="filtro-busqueda"
+              placeholder="Nombre, grupo o variante"
+              autocomplete="off"
+            >
+          </label>
+
+          <label class="campo campo-categoria">
+            <span>Categoría</span>
+            <select id="filtro-categoria">
+              <option value="todos">Todas</option>
+            </select>
+          </label>
+
+          <label class="campo campo-estado">
+            <span>Estado</span>
+            <select id="filtro-activo">
+              <option value="todos">Todos</option>
+              <option value="activos">Solo activos</option>
+              <option value="inactivos">Solo inactivos</option>
+            </select>
+          </label>
+
+          <button class="btn-primario btn-nuevo-producto" id="btn-nuevo-producto" type="button">
+            + Nuevo producto
+          </button>
+        </div>
+
+        <div class="admin-productos" id="lista-productos">
+          <p class="admin-cargando">Cargando productos…</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===================== CONFIGURACIÓN ===================== -->
+    <div class="admin-vista oculto" id="vista-configuracion" role="tabpanel" aria-labelledby="tab-configuracion">
+      <section class="admin-hero">
+        <div>
+          <span class="hero-etiqueta">Configuración</span>
+          <h2>Capacidad, horarios y despacho</h2>
+          <p>
+            Define cuántos pedidos puedes preparar por día, con cuánta
+            anticipación, qué días no hay atención y cómo se cobra el despacho
+            según la distancia.
+          </p>
+        </div>
+      </section>
+
+      <section class="admin-panel">
+        <form class="config-form" id="config-form">
+          <div class="config-grid">
+            <label class="campo">
+              <span>Pedidos por día</span>
+              <input type="number" id="config-capacidad" min="1" max="50" required>
+              <small class="campo-ayuda">Máximo que puedes preparar trabajando sola.</small>
+            </label>
+
+            <label class="campo">
+              <span>Anticipación mínima (días)</span>
+              <input type="number" id="config-anticipacion" min="0" max="60" required>
+              <small class="campo-ayuda">1 = el pedido más próximo es para mañana.</small>
+            </label>
+
+            <label class="campo">
+              <span>Máximo de días para reservar</span>
+              <input type="number" id="config-maximos" min="1" max="90" required>
+              <small class="campo-ayuda">Hasta cuántos días hacia adelante se puede pedir.</small>
+            </label>
+
+            <label class="campo">
+              <span>Compra mínima para despacho gratis</span>
+              <input type="number" id="config-monto-gratis" min="0" max="1000000" step="500" required>
+              <small class="campo-ayuda">
+                Solo aplica dentro de Padre Hurtado. 0 desactiva la promoción.
+              </small>
+            </label>
+
+            <label class="campo">
+              <span>Tarifa base de despacho</span>
+              <input type="number" id="config-tarifa-base" min="0" max="100000" step="100" required>
+              <small class="campo-ayuda">Cubre los primeros kilómetros.</small>
+            </label>
+
+            <label class="campo">
+              <span>Kilómetros incluidos en la tarifa base</span>
+              <input type="number" id="config-km-base" min="0" max="100" step="0.5" required>
+              <small class="campo-ayuda">Ej: 3 = hasta 3 km se cobra solo la tarifa base.</small>
+            </label>
+
+            <label class="campo">
+              <span>Tarifa por kilómetro adicional</span>
+              <input type="number" id="config-tarifa-km" min="0" max="100000" step="50" required>
+              <small class="campo-ayuda">Se cobra por cada km extra, redondeando hacia arriba.</small>
+            </label>
+
+            <label class="campo">
+              <span>Latitud del local</span>
+              <input type="number" id="config-lat" min="-90" max="90" step="0.0000001" required>
+              <small class="campo-ayuda">Se usa para medir la distancia de despacho.</small>
+            </label>
+
+            <label class="campo">
+              <span>Longitud del local</span>
+              <input type="number" id="config-lng" min="-180" max="180" step="0.0000001" required>
+              <small class="campo-ayuda">
+                Puedes obtenerlas en openstreetmap.org haciendo clic derecho sobre el local.
+              </small>
+            </label>
+          </div>
+
+          <fieldset class="campo-grupo">
+            <legend>Días sin atención</legend>
+            <div class="dias-grid" id="dias-cerrados">
+              <label class="dia-opcion"><input type="checkbox" name="dias_cerrados" value="1"> Lunes</label>
+              <label class="dia-opcion"><input type="checkbox" name="dias_cerrados" value="2"> Martes</label>
+              <label class="dia-opcion"><input type="checkbox" name="dias_cerrados" value="3"> Miércoles</label>
+              <label class="dia-opcion"><input type="checkbox" name="dias_cerrados" value="4"> Jueves</label>
+              <label class="dia-opcion"><input type="checkbox" name="dias_cerrados" value="5"> Viernes</label>
+              <label class="dia-opcion"><input type="checkbox" name="dias_cerrados" value="6"> Sábado</label>
+              <label class="dia-opcion"><input type="checkbox" name="dias_cerrados" value="0"> Domingo</label>
+            </div>
+          </fieldset>
+
+          <div class="config-acciones">
+            <button class="btn-primario" id="btn-guardar-config" type="submit">
+              Guardar configuración
+            </button>
+            <p class="config-mensaje" id="config-mensaje" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <!-- ===================== MODAL PRODUCTO ===================== -->
+  <div
+    class="modal-overlay oculto"
+    id="modal-producto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-titulo"
+  >
+    <div class="modal">
+      <header class="modal-header">
+        <div>
+          <h3 id="modal-titulo">Nuevo producto</h3>
+          <p id="modal-subtitulo">Completa los datos del catálogo.</p>
+        </div>
+        <button class="modal-cerrar" id="btn-cerrar-modal" type="button" aria-label="Cerrar">
+          &times;
+        </button>
+      </header>
+
+      <form class="producto-form" id="form-producto">
+        <div class="producto-grid">
+          <label class="campo">
+            <span>Nombre *</span>
+            <input type="text" id="prod-nombre" maxlength="150" required>
+          </label>
+
+          <label class="campo">
+            <span>Categoría *</span>
+            <select id="prod-categoria" required></select>
+          </label>
+
+          <label class="campo">
+            <span>Grupo (opcional)</span>
+            <input type="text" id="prod-grupo" maxlength="150">
+            <small class="campo-ayuda">
+              Agrupa variantes en una sola tarjeta, ej. "Pan de Completo".
+            </small>
+          </label>
+
+          <label class="campo">
+            <span>Variante (opcional)</span>
+            <input type="text" id="prod-variante" maxlength="100">
+            <small class="campo-ayuda">Ej. "Normal", "Cóctel", "18 cms".</small>
+          </label>
+
+          <label class="campo producto-grid-full">
+            <span>Descripción</span>
+            <textarea id="prod-descripcion" rows="2" maxlength="1000"></textarea>
+          </label>
+
+          <label class="campo producto-grid-full">
+            <span>Imagen (ruta o URL)</span>
+            <input
+              type="text"
+              id="prod-imagen"
+              maxlength="255"
+              placeholder="images/MiProducto.jpg"
+            >
+            <small class="campo-ayuda">
+              Si usas una imagen existente, escribe su ruta. Ej. images/PanCompletos.jpg
+            </small>
+          </label>
+
+          <label class="campo-check producto-grid-full">
+            <input type="checkbox" id="prod-activo" checked>
+            <span>Producto activo (visible en la tienda)</span>
+          </label>
+        </div>
+
+        <fieldset class="campo-grupo presentaciones-grupo">
+          <legend>Formatos y precios *</legend>
+          <p class="campo-ayuda presentaciones-ayuda">
+            Cada formato es una opción de compra (por unidad, paquete, kilo,
+            bandeja, etc.). El precio es el total de ese formato.
+          </p>
+          <div id="presentaciones-lista" class="presentaciones-lista"></div>
+          <button type="button" class="btn-secundario" id="btn-agregar-presentacion">
+            + Agregar formato
+          </button>
+        </fieldset>
+
+        <p class="config-mensaje" id="producto-mensaje" aria-live="polite"></p>
+
+        <div class="modal-acciones">
+          <button type="button" class="btn-secundario" id="btn-cancelar-producto">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primario" id="btn-guardar-producto">
+            Guardar producto
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
