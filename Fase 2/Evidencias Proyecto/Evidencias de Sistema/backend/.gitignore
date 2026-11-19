@@ -1,0 +1,19 @@
+# Dependencias y entorno (Seguridad)
+node_modules/
+.env
+*.log
+
+# Archivos basura o temporales de pruebas
+debug.html
+execute-sql.js
+fix-db.js
+pw-test.ps1
+restart-postgres-connection.js
+setup-database.js
+test-conn.js
+test-connection.bat
+test-conn-simple.js
+test-database.js
+test-db.js
+update-db.sql
+t.table_name).join('

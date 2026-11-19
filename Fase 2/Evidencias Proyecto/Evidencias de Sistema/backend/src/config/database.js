@@ -3,7 +3,7 @@ const { Pool } = require('pg'); // Si usas MySQL, me avisas y lo cambiamos a mys
 const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'root',
+  password: process.env.DB_PASSWORD || '', // Use password from .env, defaults to empty for local testing
   database: process.env.DB_NAME || 'matteo_masas_db',
   port: process.env.DB_PORT || 5432,
 });
