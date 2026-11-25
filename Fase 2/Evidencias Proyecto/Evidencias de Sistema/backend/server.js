@@ -1,6 +1,9 @@
 const express = require('express');
 const path = require('path'); // Importamos path
-require('dotenv').config();
+
+// Carga backend/.env sin depender del directorio desde donde se inicia el
+// proceso (en Render el comando de arranque puede ejecutarse desde la raíz).
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const productosRoutes = require('./src/routes/productosRoutes');
 const pedidosRoutes = require('./src/routes/pedidosRoutes');
@@ -14,8 +17,17 @@ const PORT = process.env.PORT || 3000;
 // de un proxy (por ejemplo, un hosting con HTTPS).
 // Solo se confía en X-Forwarded-For cuando hay un proxy delante (TRUST_PROXY=1).
 // Si no, cualquier cliente podría falsear su IP y evadir los límites por IP.
-const TRUST_PROXY = process.env.TRUST_PROXY;
-app.set('trust proxy', TRUST_PROXY ? Number(TRUST_PROXY) : false);
+function leerTrustProxy(valor) {
+  const texto = typeof valor === 'string' ? valor.trim() : '';
+  if (!texto) return false;
+
+  const numero = Number(texto);
+  if (Number.isInteger(numero) && numero > 0) return numero;
+
+  return ['true', 'yes', 'si', 'sí'].includes(texto.toLowerCase()) ? 1 : false;
+}
+
+app.set('trust proxy', leerTrustProxy(process.env.TRUST_PROXY));
 
 // Middlewares. La API solo la usa el propio sitio (mismo origen), por eso no
 // se habilita CORS para otros dominios.

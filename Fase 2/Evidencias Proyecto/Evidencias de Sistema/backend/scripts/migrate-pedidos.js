@@ -11,7 +11,7 @@
  *
  * Uso:  cd backend && npm run migrate
  */
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const pool = require('../src/config/database');
 
 /* ------------------------------------------------------------------ */

@@ -4,7 +4,7 @@
  *
  * Uso:  npm run seed
  */
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const pool = require('../src/config/database');
 
 const p = (etiqueta, cantidad, unidad, precio, orden = 1) => ({

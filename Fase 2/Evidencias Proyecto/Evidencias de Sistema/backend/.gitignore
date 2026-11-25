@@ -1,6 +1,8 @@
 # Dependencias y entorno (Seguridad)
 node_modules/
 .env
+.env.*
+!*.env.example
 *.log
 
 # Archivos basura o temporales de pruebas
@@ -16,4 +18,4 @@ test-conn-simple.js
 test-database.js
 test-db.js
 update-db.sql
-t.table_name).join('
+server.log

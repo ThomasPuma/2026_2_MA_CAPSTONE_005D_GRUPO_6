@@ -37,7 +37,7 @@ mantiene stock, prepara cada pedido según su capacidad de trabajo diaria.
 
 ## Requisitos
 
-- Node.js 18+
+- Node.js 18+ (Render usa Node 22 según `engines` en `backend/package.json`)
 - PostgreSQL
 
 ## Puesta en marcha
@@ -69,6 +69,18 @@ PORT=3000
 ADMIN_KEY=cambia_esta_clave_por_una_larga
 ```
 
+Para un hosting administrado (Render, Neon, Railway, etc.) usa una sola
+variable, que tiene prioridad sobre las anteriores:
+
+```env
+DATABASE_URL=postgresql://usuario:clave@host:5432/base?sslmode=require
+# DB_SSL=false   (solo si el proveedor no usa TLS)
+# DB_POOL_MAX=5  (recomendado en planes gratuitos)
+```
+
+El TLS se activa solo al usar `DATABASE_URL`. Hay una plantilla completa en
+[`backend/.env.example`](backend/.env.example).
+
 `ADMIN_KEY` protege el panel interno y es obligatoria. Si no está definida, el
 panel y la API privada responden 503 y no quedan abiertos. Usa una clave larga
 y no la compartas en el código ni en capturas.
@@ -79,6 +91,53 @@ También puedes crear la base desde cero con el archivo
 ```bash
 psql -U postgres -d matteo_masas_db -f matteo-masas-db.sql
 ```
+
+## Despliegue en Render
+
+El repositorio incluye [`render.yaml`](render.yaml), que declara el servicio
+web y sus variables de entorno.
+
+1. Sube el proyecto a un repositorio de GitHub.
+2. En Render, **New → Postgres** (plan Free, misma región que el servicio web).
+   Copia la **Internal Database URL**.
+3. **New → Blueprint** y selecciona el repositorio, o crea un **Web Service**
+   con los mismos valores:
+   - Build command: `cd backend && npm ci --omit=dev`
+   - Start command: `cd backend && npm start`
+   - Health check path: `/`
+4. Define las variables: `DATABASE_URL`, `ADMIN_KEY` (nueva y larga),
+   `PUBLIC_BASE_URL` (`https://<servicio>.onrender.com`), `TRUST_PROXY=1`,
+   `NODE_ENV=production`, `WEBPAY_ENVIRONMENT=integration`,
+   `WEBPAY_EXPIRA_MINUTOS=60`, `ABONO_TRANSFERENCIA_EXPIRA_HORAS=24` y
+   `DB_POOL_MAX=5`.
+5. Inicializa la base **desde tu equipo**, apuntando a la URL de Render:
+
+   ```powershell
+   $env:DATABASE_URL="postgresql://...@.../matteo_masas_db"
+   cd backend
+   npm run migrate
+   npm run seed
+   ```
+
+6. Verifica el sitio publicado: catálogo, `/admin`, creación de un pedido y el
+   flujo de Webpay en ambiente `integration`.
+
+### Consideraciones del plan gratuito
+
+- El servicio web **se suspende a los 15 minutos** sin tráfico y tarda cerca de
+  un minuto en despertar. Abre la URL antes de una demostración.
+- La base **Free de Render Postgres expira a los 30 días**. Tiene 14 días de
+  gracia para pasarla a un plan pagado; después Render la elimina con sus datos.
+  No se cobra nada automáticamente: sin método de pago, el servicio se suspende
+  en vez de facturarse.
+- No hay respaldos automáticos en el plan Free. Antes de la fecha de expiración:
+
+  ```powershell
+  pg_dump "$env:DATABASE_URL" --no-owner --no-acl -f respaldo_matteo_masas.sql
+  ```
+
+  Para recuperar el sitio gratis, crea otra base Free, ejecuta `npm run migrate`
+  y `npm run seed`, y restaura el respaldo si necesitas conservar los pedidos.
 
 ## URLs
 
@@ -215,7 +274,8 @@ Transbank.
 - **Retiro en el local:** se aceptan efectivo, tarjeta presencial, Webpay y
   transferencia.
 - **Despacho a domicilio:** solo se aceptan **Webpay** o **transferencia**.
-- **Pedidos superiores a $60.000:** requieren un **abono obligatorio del 25%**.
+- **Pedidos superiores a $60.000:** por defecto requieren un **abono del 25%**,
+  pero el cliente puede elegir **pagar el pedido completo de inmediato**.
   - Si eligen **Webpay**, el abono del 25% se cobra online al crear el pedido.
   - Si eligen **efectivo o tarjeta presencial** (solo retiro), el abono del 25%
     se cobra igual con **Webpay** y el saldo se paga al retirar.
@@ -224,6 +284,9 @@ Transbank.
   - El saldo restante se paga al retirar o recibir el pedido.
   - Si el abono por transferencia no se registra en 24 horas, el pedido se
     cancela y libera el cupo (`ABONO_TRANSFERENCIA_EXPIRA_HORAS`).
+  - **Pago completo ahora:** el cliente puede pagar el total con Webpay o
+    transferencia. En ese caso no hay abono ni saldo pendiente y el pedido se
+    marca como pagado al confirmarse el pago.
 - El panel `/admin` permite **registrar el abono recibido**, **registrar el
   saldo pagado** y **marcar pagos recibidos** de pedidos sin abono.
 

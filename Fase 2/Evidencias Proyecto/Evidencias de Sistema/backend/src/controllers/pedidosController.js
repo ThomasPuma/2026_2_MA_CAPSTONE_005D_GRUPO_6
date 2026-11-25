@@ -517,6 +517,14 @@ function validarPedido(datos) {
     errores.push('Falta la clave de la solicitud. Vuelve a enviar el pedido.');
   }
 
+  // El cliente puede elegir pagar el pedido grande completo en vez del abono.
+  // Solo se toma en cuenta cuando el total supera el umbral (se valida al crear).
+  const pagoCompleto =
+    datos.pago_completo === true ||
+    datos.pago_completo === 'true' ||
+    datos.pago_completo === 1 ||
+    datos.pago_completo === '1';
+
   const itemsMap = new Map();
 
   for (const item of items) {
@@ -562,6 +570,7 @@ function validarPedido(datos) {
       notas: notas || null,
       itemsMap,
       claveSolicitud,
+      pagoCompleto,
     },
   };
 }
@@ -595,6 +604,7 @@ exports.crearPedido = async (req, res) => {
         metodo: datos.metodoPago,
         fecha: datos.fechaEntrega,
         notas: datos.notas,
+        pagoCompleto: datos.pagoCompleto,
         items: Array.from(datos.itemsMap.entries()).sort((a, b) => a[0] - b[0]),
       })
     )
@@ -736,15 +746,28 @@ exports.crearPedido = async (req, res) => {
     const costoDespacho = despacho ? despacho.costoDespacho : 0;
     const total = redondear(subtotal + costoDespacho);
     const esPedidoGrande = total > MONTO_PEDIDO_GRANDE;
+    // Un pedido grande puede pagarse completo de inmediato si el cliente lo
+    // elige. En ese caso no se exige abono y no queda saldo pendiente.
+    const cobraPedidoCompleto = esPedidoGrande && datos.pagoCompleto;
 
-    const montoAbono = esPedidoGrande
+    if (
+      cobraPedidoCompleto &&
+      !['webpay', 'transferencia'].includes(datos.metodoPago)
+    ) {
+      throw new ErrorSolicitud(
+        'Para pagar el pedido completo ahora, elige Webpay o transferencia.'
+      );
+    }
+
+    const requiereAbono = esPedidoGrande && !cobraPedidoCompleto;
+    const montoAbono = requiereAbono
       ? Math.ceil(total * PORCENTAJE_ABONO)
       : 0;
-    const saldoPendiente = esPedidoGrande
+    const saldoPendiente = requiereAbono
       ? redondear(total - montoAbono)
       : 0;
     const estadoPagoInicial =
-      esPedidoGrande && datos.metodoPago === 'transferencia'
+      requiereAbono && datos.metodoPago === 'transferencia'
         ? 'abono_pendiente'
         : 'pendiente';
     // En pedidos grandes, el abono se cobra con Webpay salvo que el cliente
@@ -752,8 +775,8 @@ exports.crearPedido = async (req, res) => {
     // saldo en efectivo o tarjeta, pero igual deja el 25% de abono.
     const requiereCobroWebpay =
       datos.metodoPago === 'webpay' ||
-      (esPedidoGrande && datos.metodoPago !== 'transferencia');
-    const montoCobroWebpay = esPedidoGrande ? montoAbono : total;
+      (requiereAbono && datos.metodoPago !== 'transferencia');
+    const montoCobroWebpay = requiereAbono ? montoAbono : total;
     const codigo = await generarCodigoUnico(client, datos.fechaEntrega);
 
     const pedidoInsertado = await client.query(
@@ -912,17 +935,19 @@ exports.crearPedido = async (req, res) => {
     return res.status(201).json({
       exito: true,
       mensaje:
-        requiereCobroWebpay && esPedidoGrande
+        requiereCobroWebpay && requiereAbono
           ? `Pedido reservado. Completa el abono del ${Math.round(
               PORCENTAJE_ABONO * 100
             )}% en Webpay.`
           : datos.metodoPago === 'webpay'
             ? 'Pedido reservado. Completa el pago con tarjeta en Webpay.'
-            : esPedidoGrande
-              ? `Pedido recibido. Debes transferir el abono del ${Math.round(
-                  PORCENTAJE_ABONO * 100
-                )}% para confirmarlo.`
-              : 'Pedido recibido. La dueña se contactará contigo para confirmarlo.',
+            : cobraPedidoCompleto
+              ? 'Pedido recibido. Transfiere el total para confirmarlo.'
+              : esPedidoGrande
+                ? `Pedido recibido. Debes transferir el abono del ${Math.round(
+                    PORCENTAJE_ABONO * 100
+                  )}% para confirmarlo.`
+                : 'Pedido recibido. La dueña se contactará contigo para confirmarlo.',
       pedido: {
         codigo,
         nombre_cliente: datos.nombre,
@@ -967,10 +992,10 @@ exports.crearPedido = async (req, res) => {
             token: pago.token,
             ordenCompra: pago.ordenCompra,
             monto: pago.monto,
-            tipo: esPedidoGrande ? 'abono' : 'total',
+            tipo: requiereAbono ? 'abono' : 'total',
           }
         : null,
-      abono: esPedidoGrande
+      abono: requiereAbono
         ? {
             requerido: true,
             porcentaje: Math.round(PORCENTAJE_ABONO * 100),

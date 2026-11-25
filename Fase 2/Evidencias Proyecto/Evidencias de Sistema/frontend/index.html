@@ -542,6 +542,26 @@
             </div>
           </fieldset>
 
+          <fieldset class="campo-grupo" id="grupo-pago-grande" hidden>
+            <legend>Pago del pedido grande *</legend>
+            <div class="opciones">
+              <label class="opcion">
+                <input type="radio" name="tipo_pago_pedido" value="abono" checked>
+                <span>
+                  <strong id="pago-abono-titulo">Pagar abono del 25% ahora</strong>
+                  <small>El saldo restante se paga al retirar o recibir</small>
+                </span>
+              </label>
+              <label class="opcion">
+                <input type="radio" name="tipo_pago_pedido" value="total">
+                <span>
+                  <strong>Pagar el pedido completo ahora</strong>
+                  <small>Sin saldo pendiente; se paga con Webpay o transferencia</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
           <p class="campo-ayuda" id="metodos-pago-ayuda"></p>
 
           <div class="abono-aviso" id="abono-aviso" hidden></div>

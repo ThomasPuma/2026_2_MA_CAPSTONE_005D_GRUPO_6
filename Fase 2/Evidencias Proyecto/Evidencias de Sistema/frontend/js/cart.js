@@ -151,6 +151,16 @@
       radio.addEventListener('change', actualizarEntrega);
     });
 
+    document.querySelectorAll('input[name="metodo_pago"]').forEach((radio) => {
+      radio.addEventListener('change', () => actualizarResumenCheckout());
+    });
+
+    document
+      .querySelectorAll('input[name="tipo_pago_pedido"]')
+      .forEach((radio) => {
+        radio.addEventListener('change', () => actualizarResumenCheckout());
+      });
+
     $('cart-items')?.addEventListener('click', manejarClickCarrito);
     $('cart-items')?.addEventListener('change', manejarCambioCantidad);
 
@@ -566,6 +576,15 @@
     );
   }
 
+  // En pedidos grandes el cliente puede elegir entre pagar el abono del 25% o
+  // pagar el total de inmediato.
+  function pagoCompletoSeleccionado() {
+    return (
+      document.querySelector('input[name="tipo_pago_pedido"]:checked')?.value ===
+      'total'
+    );
+  }
+
   // Centraliza subtotal, despacho y total para que la vista previa y las
   // reglas de pago usen exactamente los mismos números.
   function calcularResumenCompra() {
@@ -591,14 +610,16 @@
   // Reglas de disponibilidad de cada medio de pago:
   //  - Despacho: solo Webpay o transferencia.
   //  - Pedidos sobre el monto grande: solo Webpay o transferencia (abono).
+  //  - Si se paga el pedido completo ahora: solo Webpay o transferencia.
   //  - Retiro bajo el monto grande: todos los medios.
   function actualizarMetodosPago(resumen = null) {
     const info = resumen || calcularResumenCompra();
     const esDespacho = info.tipo === 'despacho';
     const esGrande = info.total > umbralPedidoGrande();
+    const pagoCompleto = esGrande && pagoCompletoSeleccionado();
     const permitidos = {
-      efectivo: !esDespacho,
-      tarjeta: !esDespacho,
+      efectivo: !esDespacho && !pagoCompleto,
+      tarjeta: !esDespacho && !pagoCompleto,
       transferencia: true,
       webpay: Boolean(pagoWebpay?.habilitado),
     };
@@ -620,6 +641,24 @@
       etiqueta.hidden = !disponible;
       if (input) input.disabled = !disponible;
     });
+
+    const grupoPagoGrande = $('grupo-pago-grande');
+    if (grupoPagoGrande) {
+      grupoPagoGrande.hidden = !esGrande;
+
+      const tituloAbono = $('pago-abono-titulo');
+      if (tituloAbono) {
+        tituloAbono.textContent = `Pagar abono del ${porcentajeAbono()}% ahora`;
+      }
+
+      // Si el carrito baja del monto grande, vuelve a la opción por defecto.
+      if (!esGrande) {
+        const radioAbono = document.querySelector(
+          'input[name="tipo_pago_pedido"][value="abono"]'
+        );
+        if (radioAbono) radioAbono.checked = true;
+      }
+    }
 
     const seleccionado = document.querySelector(
       'input[name="metodo_pago"]:checked'
@@ -662,14 +701,16 @@
 
     const ayuda = $('metodos-pago-ayuda');
     if (ayuda) {
-      if (esGrande && esDespacho) {
+      if (esGrande && pagoCompleto) {
+        ayuda.textContent = `Elegiste pagar el pedido completo ahora: se paga con Webpay o transferencia y no queda saldo pendiente.`;
+      } else if (esGrande && esDespacho) {
         ayuda.textContent = `Los pedidos superiores a $${formatearPrecio(
           umbralPedidoGrande()
-        )} requieren un abono del ${porcentajeAbono()}%. El abono se paga con Webpay o transferencia; el saldo al recibir.`;
+        )} pueden pagarse con un abono del ${porcentajeAbono()}% y el saldo al recibir, o con el total de inmediato por Webpay o transferencia.`;
       } else if (esGrande) {
         ayuda.textContent = `Los pedidos superiores a $${formatearPrecio(
           umbralPedidoGrande()
-        )} requieren un abono del ${porcentajeAbono()}%. Si pagas en efectivo o tarjeta presencial, el abono se cobra con Webpay; el saldo se paga al retirar.`;
+        )} pueden pagarse con un abono del ${porcentajeAbono()}% y el saldo al retirar, o con el total por adelantado. Si pagas en efectivo o tarjeta presencial, el abono se cobra con Webpay.`;
       } else if (esDespacho) {
         ayuda.textContent =
           'Para despacho a domicilio solo se aceptan pagos con Webpay o transferencia.';
@@ -683,6 +724,29 @@
       if (!esGrande) {
         aviso.hidden = true;
         aviso.innerHTML = '';
+      } else if (pagoCompleto) {
+        const metodo = metodoPagoSeleccionado();
+        const esTransferencia = metodo === 'transferencia';
+
+        aviso.hidden = false;
+        aviso.innerHTML = `
+          <strong>Pedido grande: pago completo</strong>
+          <p>Total del pedido: $${formatearPrecio(info.total)}</p>
+          <p>Pagas ahora: <b>$${formatearPrecio(
+            info.total
+          )}</b> ${esTransferencia ? 'por transferencia' : 'con Webpay'}.</p>
+          <p>No queda saldo pendiente al retirar o recibir.</p>
+          <p>${
+            esTransferencia
+              ? 'Al confirmar, te enviaremos los datos para transferir el total.'
+              : 'Al confirmar, te redirigiremos a Webpay para pagar el total.'
+          }</p>
+          ${
+            info.totalConocido
+              ? ''
+              : '<p>El total final se recalcula al seleccionar tu dirección de despacho.</p>'
+          }
+        `;
       } else {
         const porcentaje = porcentajeAbono();
         const monto = Math.ceil(info.total * (porcentaje / 100));
@@ -693,7 +757,7 @@
 
         aviso.hidden = false;
         aviso.innerHTML = `
-          <strong>Pedido grande: abono obligatorio del ${porcentaje}%</strong>
+          <strong>Pedido grande: abono del ${porcentaje}%</strong>
           <p>Total del pedido: $${formatearPrecio(info.total)}</p>
           <p>Abono a pagar ahora: <b>$${formatearPrecio(
             monto
@@ -1433,13 +1497,14 @@
     const { subtotal, tipo, cotizacion, costoDespacho, total } = info;
     const metodo = metodoPagoSeleccionado();
     const esGrande = total > umbralPedidoGrande();
+    const pagoCompleto = esGrande && pagoCompletoSeleccionado();
     const porcentaje = porcentajeAbono();
-    const montoAbono = esGrande
-      ? Math.ceil(total * (porcentaje / 100))
-      : 0;
-    const saldoAbono = esGrande ? redondear(total - montoAbono) : 0;
+    const montoAbono =
+      esGrande && !pagoCompleto ? Math.ceil(total * (porcentaje / 100)) : 0;
+    const saldoAbono =
+      esGrande && !pagoCompleto ? redondear(total - montoAbono) : 0;
     const abonoMetodo = metodo === 'transferencia' ? 'transferencia' : 'Webpay';
-    const mostrarAbono = esGrande && info.totalConocido;
+    const mostrarAbono = esGrande && !pagoCompleto && info.totalConocido;
 
     let etiquetaDespacho = 'Despacho';
     let textoEntrega = 'Retiro en el local (sin costo)';
@@ -1507,7 +1572,7 @@
         mostrarAbono
           ? `
             <div class="checkout-resumen-linea">
-              <span>Abono obligatorio (${porcentaje}%)</span>
+              <span>Abono (${porcentaje}%)</span>
               <strong>$${formatearPrecio(montoAbono)}</strong>
             </div>
             <div class="checkout-resumen-linea">
@@ -1525,8 +1590,25 @@
           : ''
       }
       ${
+        esGrande && pagoCompleto && info.totalConocido
+          ? `
+            <div class="checkout-resumen-linea">
+              <span>Pago completo ahora</span>
+              <strong>$${formatearPrecio(total)}</strong>
+            </div>
+            <p class="cart-ayuda">
+              Pagas el total con ${abonoMetodo}. No queda saldo pendiente al retirar o recibir.
+            </p>
+          `
+          : ''
+      }
+      ${
         esGrande && !info.totalConocido
-          ? `<p class="cart-ayuda">El abono del ${porcentaje}% se calcula al seleccionar tu dirección de despacho.</p>`
+          ? `<p class="cart-ayuda">${
+              pagoCompleto
+                ? 'El total final se calcula al seleccionar tu dirección de despacho.'
+                : `El abono del ${porcentaje}% se calcula al seleccionar tu dirección de despacho.`
+            }</p>`
           : ''
       }
       ${
@@ -1561,6 +1643,7 @@
           metodo_pago: carga.metodo_pago || 'efectivo',
           fecha_entrega: carga.fecha_entrega || '',
           notas: carga.notas || '',
+          pago_completo: Boolean(carga.pago_completo),
         })
       );
     } catch (error) {
@@ -1644,6 +1727,13 @@
     if (radioPago && !radioPago.disabled) {
       radioPago.checked = true;
     }
+
+    const radioTipoPago = document.querySelector(
+      `input[name="tipo_pago_pedido"][value="${
+        datos.pago_completo ? 'total' : 'abono'
+      }"]`
+    );
+    if (radioTipoPago) radioTipoPago.checked = true;
 
     const selectFecha = $('cliente-fecha');
 
@@ -1834,6 +1924,11 @@
       metodo_pago: datos.get('metodo_pago'),
       fecha_entrega: datos.get('fecha_entrega'),
       notas: datos.get('notas'),
+      // Solo se envía cuando el pedido supera el monto grande y el cliente
+      // eligió pagar el total en vez del abono.
+      pago_completo:
+        calcularResumenCompra().total > umbralPedidoGrande() &&
+        pagoCompletoSeleccionado(),
       clave_solicitud: claveSolicitudActual,
       items: items.map((item) => ({
         id_presentacion: item.id_presentacion,
@@ -2067,6 +2162,15 @@
           saldoPendiente
         )} se paga al retirar o recibir.`;
       }
+    } else if (
+      pedido.metodo_pago === 'transferencia' &&
+      Number(pedido.total) > umbralPedidoGrande() &&
+      !pagoCompleto
+    ) {
+      // Pedido grande pagado completo por transferencia: se espera el total.
+      notaPago = `Transfiere el total de $${formatearPrecio(
+        pedido.total
+      )} para confirmar tu pedido.`;
     }
 
     const cierre =

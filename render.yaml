@@ -1,0 +1,35 @@
+﻿# Blueprint de Render para Matteo Masas.
+#
+# El codigo vive dentro de la estructura de entrega del capstone, por eso se
+# define rootDir. El servidor Express sirve tambien la carpeta frontend/.
+#
+# Las variables con sync: false se completan a mano en el dashboard de Render.
+
+services:
+  - type: web
+    name: matteo-masas
+    runtime: node
+    plan: free
+    rootDir: "Fase 2/Evidencias Proyecto/Evidencias de Sistema"
+    buildCommand: cd backend && npm ci --omit=dev
+    startCommand: cd backend && npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: WEBPAY_ENVIRONMENT
+        value: integration
+      - key: WEBPAY_EXPIRA_MINUTOS
+        value: "60"
+      - key: ABONO_TRANSFERENCIA_EXPIRA_HORAS
+        value: "24"
+      - key: DB_POOL_MAX
+        value: "5"
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_KEY
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false

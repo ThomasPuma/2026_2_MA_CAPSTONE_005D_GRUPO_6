@@ -62,16 +62,18 @@ Cuando Webpay muestre el formulario del banco, usa:
 Agrega productos por **más de $60.000** (por ejemplo, 2 paquetes de 100 mini
 berlines). Al confirmar:
 
-- el pedido queda con un **abono obligatorio del 25%**;
+- el pedido queda con un **abono por defecto del 25%**, o con **pago completo**
+  si eliges la opción "Pagar el pedido completo ahora";
 - si eliges **Webpay**, la pasarela cobra solo ese 25% y el resto queda como
-  saldo pendiente;
+  saldo pendiente (o el 100% si elegiste pago completo);
 - si eliges **efectivo o tarjeta presencial**, igual te redirigimos a Webpay
   para pagar el abono; el saldo lo pagas al retirar;
 - si eliges **transferencia**, el pedido queda como **abono pendiente** hasta
   que la dueña lo registre en `/admin`.
 
 Puedes probar el flujo completo con la VISA de prueba; el saldo restante no se
-cobra en la pasarela.
+cobra en la pasarela. Si eliges pago completo con transferencia, el pedido
+queda pendiente hasta que la dueña registre el total recibido.
 
 ## Producción
 
