@@ -94,14 +94,16 @@ psql -U postgres -d matteo_masas_db -f matteo-masas-db.sql
 
 ## Despliegue en Render
 
-El repositorio incluye [`render.yaml`](render.yaml), que declara el servicio
-web y sus variables de entorno.
+El repositorio incluye un `render.yaml` en su raíz, que declara el servicio web
+y sus variables de entorno. Ese archivo fija el **Root Directory** en
+`Fase 2/Evidencias Proyecto/Evidencias de Sistema`, donde vive el código.
 
-1. Sube el proyecto a un repositorio de GitHub.
+1. Verifica que la rama `main` del repositorio tenga la versión final.
 2. En Render, **New → Postgres** (plan Free, misma región que el servicio web).
    Copia la **Internal Database URL**.
-3. **New → Blueprint** y selecciona el repositorio, o crea un **Web Service**
-   con los mismos valores:
+3. **New → Blueprint** y selecciona el repositorio. Si prefieres crear el
+   servicio a mano, usa los mismos valores:
+   - Root Directory: `Fase 2/Evidencias Proyecto/Evidencias de Sistema`
    - Build command: `cd backend && npm ci --omit=dev`
    - Start command: `cd backend && npm start`
    - Health check path: `/`
