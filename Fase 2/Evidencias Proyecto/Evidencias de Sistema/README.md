@@ -109,9 +109,9 @@ y sus variables de entorno. Ese archivo fija el **Root Directory** en
    - Health check path: `/`
 4. Define las variables: `DATABASE_URL`, `ADMIN_KEY` (nueva y larga),
    `PUBLIC_BASE_URL` (`https://<servicio>.onrender.com`), `TRUST_PROXY=1`,
-   `NODE_ENV=production`, `WEBPAY_ENVIRONMENT=integration`,
-   `WEBPAY_EXPIRA_MINUTOS=60`, `ABONO_TRANSFERENCIA_EXPIRA_HORAS=24` y
-   `DB_POOL_MAX=5`.
+   `NODE_ENV=production`, `TZ=America/Santiago`,
+   `WEBPAY_ENVIRONMENT=integration`, `WEBPAY_EXPIRA_MINUTOS=60`,
+   `ABONO_TRANSFERENCIA_EXPIRA_HORAS=24` y `DB_POOL_MAX=5`.
 5. Inicializa la base **desde tu equipo**, apuntando a la URL de Render:
 
    ```powershell

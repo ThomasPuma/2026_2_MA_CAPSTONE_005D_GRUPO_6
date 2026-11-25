@@ -17,6 +17,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      # El hosting corre en UTC; la tienda calcula las fechas de entrega con la
+      # hora local, por eso se fija la zona horaria de Chile.
+      - key: TZ
+        value: America/Santiago
       - key: TRUST_PROXY
         value: "1"
       - key: WEBPAY_ENVIRONMENT

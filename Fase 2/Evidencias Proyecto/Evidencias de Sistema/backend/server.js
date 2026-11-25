@@ -13,6 +13,9 @@ const { obtenerConfiguracionWebpay } = require('./src/services/webpay');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// No revelar el framework en las respuestas HTTP.
+app.disable('x-powered-by');
+
 // Necesario para construir la URL de retorno cuando el sitio está detrás
 // de un proxy (por ejemplo, un hosting con HTTPS).
 // Solo se confía en X-Forwarded-For cuando hay un proxy delante (TRUST_PROXY=1).
