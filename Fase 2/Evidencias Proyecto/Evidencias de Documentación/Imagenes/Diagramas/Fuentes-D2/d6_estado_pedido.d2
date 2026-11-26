@@ -1,0 +1,25 @@
+# Máquina de estados del pedido (PEDIDO.estado)
+
+direction: right
+
+inicio: Inicio {shape: circle}
+pendiente: Pendiente
+confirmado: Confirmado
+en_preparacion: "En preparación"
+listo: Listo
+entregado: Entregado
+cancelado: Cancelado
+fin: Final {shape: circle}
+
+inicio -> pendiente: "pedido creado"
+pendiente -> confirmado: "la dueña confirma"
+confirmado -> en_preparacion
+en_preparacion -> listo
+listo -> entregado
+pendiente -> cancelado
+confirmado -> cancelado
+en_preparacion -> cancelado
+listo -> cancelado
+cancelado -> pendiente: "reactivación con cupo"
+entregado -> fin
+cancelado -> fin

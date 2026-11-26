@@ -1,0 +1,39 @@
+# Arquitectura de componentes y stack · Matteo Masas
+
+direction: down
+
+navegador: "Navegador" {
+  style.border-radius: 8
+  tienda: "Tienda pública · index.html · app.js · cart.js"
+  panel: "Panel interno · admin.html · admin.js"
+  mapa: "Mapa Leaflet"
+}
+
+servidor: "Servidor · Node.js (20 a 22) · Express 5" {
+  style.border-radius: 8
+  estaticos: "Archivos estáticos · frontend/"
+  api: "API REST · /api/productos · /api/pedidos · /api/pagos"
+  middlewares: "requireAdmin · límites por IP"
+  controladores: "Controladores · productos · pedidos · pagos"
+  webpay: "webpay.js · Webpay Plus"
+  delivery: "delivery.js · Haversine y polígono de Padre Hurtado"
+}
+
+bd: "PostgreSQL · 6 tablas · local o Render Postgres" {shape: cylinder}
+transbank: "Transbank · Webpay Plus" {style.stroke-dash: 3}
+nominatim: "Nominatim · búsqueda de direcciones" {style.stroke-dash: 3}
+tiles: "Tiles de OpenStreetMap" {style.stroke-dash: 3}
+
+tienda -> estaticos
+panel -> estaticos
+tienda -> api
+panel -> api: "header x-admin-key"
+api -> middlewares
+middlewares -> controladores
+controladores -> delivery
+controladores -> webpay
+webpay -> transbank: "create · commit · refund"
+controladores -> bd: "SQL parametrizado"
+tienda -> mapa
+mapa -> tiles
+mapa -> nominatim: "geocodificación"

@@ -1,0 +1,25 @@
+# Despliegue: desarrollo local y producción en Render
+
+direction: right
+
+local: "Desarrollo local" {
+  style.border-radius: 8
+  node_local: "Node en localhost:3000 · npm run migrate · npm run seed"
+  pg_local: "PostgreSQL local · variables DB_*" {shape: cylinder}
+  webpay_int: "Webpay integration · tarjetas de prueba" {style.stroke-dash: 3}
+  node_local -> pg_local
+  node_local -> webpay_int
+}
+
+render: "Producción · Render (plan free)" {
+  style.border-radius: 8
+  cliente: "Cliente"
+  proxy: "Proxy de Render · HTTPS automático"
+  web: "Web Service · Node + Express · render.yaml"
+  pg_render: "Render Postgres · DATABASE_URL con TLS" {shape: cylinder}
+  webpay_render: "Webpay integration · producción pendiente de credenciales" {style.stroke-dash: 3}
+  cliente -> proxy: "https://matteo-masas.onrender.com"
+  proxy -> web: "TRUST_PROXY=1 · TZ America/Santiago"
+  web -> pg_render: "DB_POOL_MAX=5 · SQL parametrizado"
+  web -> webpay_render: "PUBLIC_BASE_URL https"
+}

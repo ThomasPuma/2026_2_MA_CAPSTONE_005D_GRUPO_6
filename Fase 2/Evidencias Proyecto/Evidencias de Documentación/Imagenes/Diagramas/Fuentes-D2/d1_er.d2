@@ -1,0 +1,115 @@
+# Modelo Entidad-Relación · Matteo Masas
+# Esquema real: matteo-masas-db.sql y backend/scripts/migrate-pedidos.js
+
+direction: right
+
+categoria: CATEGORIA {
+  shape: sql_table
+  id_categoria: int {constraint: primary_key}
+  nombre: varchar(100) NOT NULL
+}
+
+producto: PRODUCTO {
+  shape: sql_table
+  id_producto: int {constraint: primary_key}
+  id_categoria: int {constraint: foreign_key}
+  nombre: varchar(150) NOT NULL
+  descripcion: text
+  imagen_url: varchar(255)
+  activo: boolean DEFAULT TRUE
+  grupo: varchar(150)
+  variante: varchar(100)
+  creado_en: timestamptz
+  actualizado_en: timestamptz
+}
+
+presentacion: PRESENTACION {
+  shape: sql_table
+  id_presentacion: int {constraint: primary_key}
+  id_producto: int {constraint: foreign_key}
+  etiqueta: varchar(100) NOT NULL
+  cantidad: numeric(10,2) NOT NULL
+  unidad: varchar(20) DEFAULT unidad
+  precio: numeric(10,2) NOT NULL
+  orden: int
+}
+
+configuracion_negocio: CONFIGURACION_NEGOCIO {
+  shape: sql_table
+  id_configuracion: int {constraint: primary_key}
+  capacidad_pedidos_por_dia: int DEFAULT 6
+  dias_anticipacion_minima: int DEFAULT 1
+  dias_maximos_reserva: int DEFAULT 21
+  dias_cerrados_semana: "int[]"
+  costo_despacho: numeric(10,2) DEFAULT 0
+  lat_tienda: numeric(10,7)
+  lng_tienda: numeric(10,7)
+  monto_despacho_gratis: numeric(10,2) DEFAULT 15000
+  tarifa_base_despacho: numeric(10,2) DEFAULT 1500
+  km_base_despacho: numeric(7,2) DEFAULT 3
+  tarifa_km_adicional: numeric(10,2) DEFAULT 750
+  actualizado_en: timestamptz
+}
+
+pedido: PEDIDO {
+  shape: sql_table
+  id_pedido: int {constraint: primary_key}
+  codigo: varchar(24) NOT NULL UNIQUE
+  nombre_cliente: varchar(150) NOT NULL
+  telefono: varchar(30) NOT NULL
+  email: varchar(150)
+  tipo_entrega: varchar(20)
+  direccion: varchar(255)
+  lat_entrega: numeric(10,7)
+  lng_entrega: numeric(10,7)
+  distancia_km: numeric(7,2)
+  fuera_comuna: boolean
+  despacho_gratis: boolean
+  fecha_entrega: date NOT NULL
+  metodo_pago: varchar(20)
+  estado_pago: varchar(20)
+  pagado_en: timestamptz
+  monto_abono: numeric(10,2) DEFAULT 0
+  saldo_pendiente: numeric(10,2) DEFAULT 0
+  abono_pagado: boolean DEFAULT FALSE
+  abono_pagado_en: timestamptz
+  webpay_token: varchar(255)
+  webpay_orden_compra: varchar(64)
+  webpay_sesion: varchar(64)
+  webpay_url: varchar(500)
+  webpay_autorizacion: varchar(64)
+  webpay_tipo_pago: varchar(20)
+  webpay_cuotas: int
+  webpay_fecha_pago: timestamptz
+  webpay_detalle: jsonb
+  clave_solicitud: varchar(64) UNIQUE
+  huella_solicitud: varchar(64)
+  notas: text
+  subtotal: numeric(10,2) NOT NULL
+  costo_despacho: numeric(10,2) NOT NULL
+  total: numeric(10,2) NOT NULL
+  estado: varchar(20)
+  creado_en: timestamptz
+  actualizado_en: timestamptz
+}
+
+detalle_pedido: DETALLE_PEDIDO {
+  shape: sql_table
+  id_detalle: int {constraint: primary_key}
+  id_pedido: int {constraint: foreign_key}
+  id_producto: int {constraint: foreign_key}
+  id_presentacion: int {constraint: foreign_key}
+  nombre_producto: varchar(150) NOT NULL
+  presentacion_etiqueta: varchar(100) NOT NULL
+  presentacion_unidad: varchar(20)
+  unidades_por_paquete: numeric(10,2)
+  precio_unitario: numeric(10,2)
+  cantidad: int
+  subtotal: numeric(10,2)
+}
+
+categoria.id_categoria -> producto.id_categoria: "1 a N · una categoría agrupa productos"
+producto.id_producto -> presentacion.id_producto: "1 a N · un producto ofrece formatos"
+pedido.id_pedido -> detalle_pedido.id_pedido: "1 a N · cada pedido tiene al menos una línea"
+producto.id_producto -> detalle_pedido.id_producto: "referencia histórica · conserva nombre y precio"
+presentacion.id_presentacion -> detalle_pedido.id_presentacion: "referencia histórica"

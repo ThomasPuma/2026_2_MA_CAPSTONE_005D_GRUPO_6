@@ -1,0 +1,32 @@
+# Estados de pago (PEDIDO.estado_pago)
+
+direction: right
+
+inicio: Inicio {shape: circle}
+pendiente: Pendiente
+abono_pendiente: "Abono pendiente"
+abono_pagado: "Abono pagado"
+pagado: Pagado
+rechazado: Rechazado
+anulado: Anulado
+expirado: Expirado
+reembolsado: Reembolsado
+fin: Final {shape: circle}
+
+inicio -> pendiente
+pendiente -> pagado: "Webpay total o marcar pagado"
+pendiente -> abono_pendiente: "pedido grande por transferencia"
+pendiente -> abono_pagado: "abono Webpay aprobado"
+abono_pendiente -> abono_pagado: "registrar abono"
+abono_pendiente -> expirado: "24 horas sin abono · cancela"
+abono_pagado -> pagado: "registrar saldo"
+pendiente -> rechazado: "Webpay rechaza · cancela"
+pendiente -> anulado: "cliente anula · cancela"
+pendiente -> expirado: "60 minutos sin retorno"
+pagado -> reembolsado: "cancelación con devolución"
+abono_pagado -> reembolsado: "cancelación con devolución del abono"
+pagado -> fin
+rechazado -> fin
+anulado -> fin
+expirado -> fin
+reembolsado -> fin

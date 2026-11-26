@@ -1,0 +1,34 @@
+# Operación diaria del panel interno
+
+direction: down
+
+a: "Abrir /admin e ingresar la clave"
+b: "¿Clave válida?" {shape: diamond}
+c: "401 · tras 10 fallos 429 durante 15 minutos"
+d: "Resumen del día · cupo · pendientes · en proceso · ingresos"
+e: "Filtrar por fecha y estado"
+f: "Actualizar estado · solo transiciones válidas · 409 si no"
+g: "Registrar pagos · abono · saldo · marcar pagado"
+h: "Cancelar pedido"
+i: "¿Pagado con Webpay?" {shape: diamond}
+j: "Reembolso automático · si falla no se cancela"
+k: "Cupo liberado"
+o: "Reactivación posible si el día tiene cupo"
+l: "Mantener productos y formatos"
+m: "Ajustar cupo · días cerrados · tarifas"
+n: "Refresco automático cada 10 segundos · hora de última sincronización"
+
+a -> b
+b -> c: "No"
+b -> d: "Sí"
+d -> e
+e -> f
+e -> g
+e -> h
+h -> i
+i -> j: "Sí"
+i -> k: "No"
+k -> o
+e -> l
+e -> m
+d -> n
