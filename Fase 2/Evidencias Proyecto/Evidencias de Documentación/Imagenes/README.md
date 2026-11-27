@@ -59,3 +59,14 @@ Capturas obtenidas al ejecutar los 60 casos de prueba contra el sitio desplegado
 | `rq01_movil_360.png` | Verificación responsive en móvil (360 px). |
 | `rq02_tablet_768.png` | Verificación responsive en tablet (768 px). |
 | `rq03_escritorio_1280.png` | Verificación responsive en escritorio (1280 px). |
+
+## 🆕 Mejora post-cierre (HU17)
+
+Capturas de la mejora entregada el 27/11/2026: seguimiento público del pedido, aviso del código en el comprobante y alerta de pedido nuevo en el panel.
+
+| Archivo | Evidencia |
+| --- | --- |
+| `Evidencias-QA/seg01_seguimiento_escritorio.png` | Página de seguimiento del pedido en escritorio, con línea de tiempo de estados. |
+| `Evidencias-QA/seg02_seguimiento_movil.png` | Seguimiento en móvil (390 px), sin desplazamiento horizontal. |
+| `Evidencias-QA/seg03_comprobante_sin_correo.png` | Comprobante de un pedido sin correo: aviso para guardar el código y botones de copia. |
+| `Evidencias-QA/seg04_aviso_pedido_nuevo.png` | Panel con el banner de pedido nuevo, sonido y resaltado de la tarjeta. |

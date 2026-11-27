@@ -158,6 +158,7 @@ El ambiente de pago de Webpay permanece en **integración** hasta contar con las
 | 11 | Documento de pruebas (60 casos) |
 | 12 | Pruebas de rendimiento (latencia y Lighthouse) |
 | — | Informe Final Capstone e Informe de Evidencias QA |
+| — | Mejora post-cierre HU17: seguimiento del pedido y notificaciones por correo |
 
 ## 📌 Notas Finales
 
