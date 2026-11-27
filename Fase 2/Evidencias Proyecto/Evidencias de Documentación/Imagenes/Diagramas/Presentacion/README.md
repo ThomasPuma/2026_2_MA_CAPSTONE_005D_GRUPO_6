@@ -7,8 +7,8 @@ para aprovechar el espacio.
 | Orden | Archivo | Qué muestra |
 | --- | --- | --- |
 | 1 | `p1_er.png` | MER resumido: las 8 tablas con claves y campos principales. |
-| 2 | `p2_arquitectura.png` | Arquitectura: tienda, panel, seguimiento, API, PostgreSQL, Webpay y correo. |
-| 3 | `p3_despliegue.png` | Desarrollo local y producción en Render (HTTPS, Webpay y API de correo). |
+| 2 | `p2_arquitectura.png` | Arquitectura: tienda, panel, seguimiento, API, PostgreSQL, Webpay y Brevo. |
+| 3 | `p3_despliegue.png` | Desarrollo local y producción en Render (HTTPS, Webpay y Brevo). |
 | 4 | `p4_pedido.png` | Proceso de compra como diagrama de secuencia (cliente, servidor, BD, correo y Webpay). |
 | 5 | `p5_panel.png` | Operación del panel: pedidos, estados, pagos, configuración y aviso de pedido nuevo. |
 | 6 | `p6_estado_pedido.png` | Máquina de estados del pedido. |

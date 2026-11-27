@@ -9,8 +9,8 @@ Modelos elaborados con el lenguaje **D2** de Terrastruct. Las fuentes editables 
 | Archivo | Contenido |
 | --- | --- |
 | `d1_er.png` | Modelo entidad-relación: ocho tablas (seis de negocio y dos de seguimiento) con claves y relaciones. |
-| `d2_arquitectura.png` | Arquitectura de componentes y stack: tienda, panel, seguimiento, API REST, PostgreSQL y servicios externos (Webpay y correo por HTTPS). |
-| `d3_despliegue.png` | Despliegue en Render: servicio web, base de datos administrada, HTTPS, pasarela Transbank y API de correo. |
+| `d2_arquitectura.png` | Arquitectura de componentes y stack: tienda, panel, seguimiento, API REST, PostgreSQL y servicios externos (Webpay y Brevo por HTTPS). |
+| `d3_despliegue.png` | Despliegue en Render: servicio web, base de datos administrada, HTTPS, pasarela Transbank y Brevo por HTTPS. |
 | `d4_pedido.png` | Flujo de creación de un pedido: catálogo, carrito, cupo, pago, confirmación y correo de seguimiento. |
 | `d5_panel.png` | Flujo operativo del panel: pedidos del día, aviso de pedido nuevo, estados, pagos y configuración. |
 | `d6_estado_pedido.png` | Máquina de estados del pedido: Pendiente → Confirmado → En preparación → Listo → Entregado, con cancelación y reactivación. |

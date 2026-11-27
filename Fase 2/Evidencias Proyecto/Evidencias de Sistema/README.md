@@ -95,8 +95,9 @@ y no la compartas en el código ni en capturas.
 
 ### Correo transaccional (opcional)
 
-Los correos de confirmación y de cambio de estado se envían por **HTTPS** con
-**Brevo**, **SendGrid** o **Resend**, o por **SMTP** donde el hosting lo permita.
+En producción los correos de confirmación y de cambio de estado se envían por
+**HTTPS** con **Brevo**. El servicio queda configurable para usar SendGrid, Resend
+o SMTP como alternativa.
 Si no configuras ninguno, la tienda funciona igual: los envíos quedan
 registrados como `omitido` en la tabla `NOTIFICACION_CORREO`.
 
