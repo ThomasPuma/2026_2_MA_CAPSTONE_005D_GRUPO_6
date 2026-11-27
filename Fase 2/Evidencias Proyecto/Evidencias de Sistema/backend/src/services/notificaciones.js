@@ -177,8 +177,9 @@ function plantilla({ titulo, intro, pedido, lineas = [], nota = '' }) {
       }
 
       <p style="margin:22px 0 0;font-size:12px;color:#9a8b7c;">
+        Matteo Masas · Calle Parque Villarrica 1209, 9710000 Padre Hurtado, Región Metropolitana · Tel: +56 9 7925 8703<br>
         Este correo se envió automáticamente por un pedido en Matteo Masas.
-        Si no reconoces este pedido, escríbenos para revisarlo.
+        Si no reconoces este pedido, contáctanos para revisarlo.
       </p>
     </div>
   </div>`;
@@ -401,8 +402,8 @@ async function notificarCambioEstado(idPedido, estadoNuevo) {
     const nota =
       estadoNuevo === 'listo'
         ? pedido.tipo_entrega === 'retiro'
-          ? 'Puedes retirarlo en el local en el horario de atención.'
-          : 'Coordina la recepción en la dirección indicada al hacer el pedido.'
+          ? 'Puedes retirarlo en nuestro local en Calle Parque Villarrica 1209, Padre Hurtado (contacto: +56 9 7925 8703).'
+          : 'Coordina la recepción en la dirección indicada al hacer el pedido (contacto: +56 9 7925 8703).'
         : '';
 
     const contenido = plantilla({

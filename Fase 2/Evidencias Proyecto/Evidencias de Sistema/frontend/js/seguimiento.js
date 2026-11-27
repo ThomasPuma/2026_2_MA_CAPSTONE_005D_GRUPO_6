@@ -320,7 +320,7 @@
 
     $('seg-entrega').textContent =
       pedido.tipo_entrega === 'retiro'
-        ? 'Retiro en el local'
+        ? 'Retiro en el local (Calle Parque Villarrica 1209, Padre Hurtado)'
         : 'Despacho a domicilio';
 
     const complemento = detalles.length ? ` (${detalles.join(' · ')})` : '';

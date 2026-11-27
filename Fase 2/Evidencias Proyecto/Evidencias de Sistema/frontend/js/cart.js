@@ -1004,7 +1004,7 @@
           fillOpacity: 1,
         })
         .addTo(mapa)
-        .bindTooltip('Local Matteo Masas');
+        .bindTooltip('Local Matteo Masas · Calle Parque Villarrica 1209');
     } else {
       marcadorTienda.setLatLng([tienda.lat, tienda.lng]);
     }
@@ -2040,7 +2040,7 @@
       : '';
     const entrega =
       pedido.tipo_entrega === 'retiro'
-        ? 'Retiro en el local'
+        ? 'Retiro en el local (Calle Parque Villarrica 1209, Padre Hurtado)'
         : `Despacho a domicilio${detalleDistancia}`;
     const pago = NOMBRES_PAGO[pedido.metodo_pago] || pedido.metodo_pago;
     const costoDespacho = Number(pedido.costo_despacho) || 0;
