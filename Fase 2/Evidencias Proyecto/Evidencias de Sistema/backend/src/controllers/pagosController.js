@@ -104,6 +104,22 @@ async function anularPagoPendiente(pedido, idSesion) {
     [pedido.id_pedido, pedido.webpay_sesion]
   );
 
+  if (resultado.rowCount > 0) {
+    // La línea de tiempo del seguimiento también refleja la anulación.
+    try {
+      await pool.query(
+        `
+        INSERT INTO HISTORIAL_ESTADO_PEDIDO
+          (id_pedido, estado_anterior, estado_nuevo, motivo, usuario)
+        VALUES ($1, 'pendiente', 'cancelado', $2, 'cliente')
+        `,
+        [pedido.id_pedido, 'El cliente anuló el pago en Webpay']
+      );
+    } catch (error) {
+      console.error('No se pudo registrar el historial del pedido:', error.message);
+    }
+  }
+
   return resultado.rowCount > 0;
 }
 

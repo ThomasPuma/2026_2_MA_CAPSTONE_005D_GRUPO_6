@@ -11,6 +11,11 @@ const {
   reembolsarPagoWebpay,
   obtenerConfiguracionWebpay,
 } = require('../services/webpay');
+const {
+  notificarPedidoCreado,
+  notificarCambioEstado,
+  notificarPago,
+} = require('../services/notificaciones');
 
 const ESTADOS = [
   'pendiente',
@@ -54,7 +59,9 @@ const CAMPOS_PUBLICOS = [
   'distancia_km',
   'despacho_gratis',
   'creado_en',
+  'actualizado_en',
   'items',
+  'historial',
 ];
 
 function pedidoPublico(pedido) {
@@ -221,6 +228,39 @@ function responderErrorBaseDatos(res, error) {
  *  - Transferencias con abono pendiente que no fueron verificadas.
  * Los pagos cuya confirmación falló se dejan para revisión manual.
  */
+/**
+ * Agrega una fila a la bitácora de estados del pedido. Se usa para construir
+ * la línea de tiempo que ve el cliente en la página de seguimiento.
+ */
+async function registrarHistorial(consultador, pedidos, datos) {
+  const ids = (pedidos || [])
+    .map((item) => Number(item.id_pedido ?? item))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  const {
+    estadoNuevo,
+    estadoAnterior = null,
+    motivo = null,
+    usuario = 'sistema',
+  } = datos || {};
+
+  if (ids.length === 0 || !estadoNuevo) return;
+
+  try {
+    await consultador.query(
+      `
+      INSERT INTO HISTORIAL_ESTADO_PEDIDO
+        (id_pedido, estado_anterior, estado_nuevo, motivo, usuario)
+      SELECT unnest($1::int[]), $2, $3, $4, $5
+      `,
+      [ids, estadoAnterior, estadoNuevo, motivo, usuario]
+    );
+  } catch (error) {
+    // No se interrumpe la operación principal si falta la bitácora.
+    console.error('No se pudo registrar el historial del pedido:', error.message);
+  }
+}
+
 async function liberarPagosExpirados() {
   const configurados = Number(process.env.WEBPAY_EXPIRA_MINUTOS);
   const minutos =
@@ -236,7 +276,7 @@ async function liberarPagosExpirados() {
       : 24;
 
   try {
-    await pool.query(
+    const webpayExpirados = await pool.query(
       `
       UPDATE PEDIDO
       SET
@@ -249,11 +289,18 @@ async function liberarPagosExpirados() {
         AND (webpay_detalle IS NULL
              OR webpay_detalle->>'confirmacion_fallida' IS DISTINCT FROM 'true')
         AND creado_en < NOW() - ($1::int * INTERVAL '1 minute')
+      RETURNING id_pedido
       `,
       [minutos]
     );
 
-    await pool.query(
+    await registrarHistorial(pool, webpayExpirados.rows, {
+      estadoNuevo: 'cancelado',
+      motivo: 'Pago no completado dentro del plazo',
+      usuario: 'sistema',
+    });
+
+    const transferenciasExpiradas = await pool.query(
       `
       UPDATE PEDIDO
       SET
@@ -264,9 +311,16 @@ async function liberarPagosExpirados() {
         AND estado_pago = 'abono_pendiente'
         AND estado = 'pendiente'
         AND creado_en < NOW() - ($1::int * INTERVAL '1 hour')
+      RETURNING id_pedido
       `,
       [horas]
     );
+
+    await registrarHistorial(pool, transferenciasExpiradas.rows, {
+      estadoNuevo: 'cancelado',
+      motivo: 'Abono por transferencia no registrado dentro del plazo',
+      usuario: 'sistema',
+    });
   } catch (error) {
     // La limpieza no debe impedir que el cliente vea la agenda o compre.
     if (!esTablaFaltante(error)) {
@@ -872,6 +926,12 @@ exports.crearPedido = async (req, res) => {
       );
     }
 
+    await registrarHistorial(client, [idPedido], {
+      estadoNuevo: 'pendiente',
+      motivo: 'Pedido recibido y cupo diario reservado',
+      usuario: 'cliente',
+    });
+
     await client.query('COMMIT');
 
     // El pedido ya está reservado. El pago con Webpay se inicia después del
@@ -918,6 +978,11 @@ exports.crearPedido = async (req, res) => {
             `,
             [idPedido]
           );
+          await registrarHistorial(pool, [idPedido], {
+            estadoNuevo: 'cancelado',
+            motivo: 'No se pudo iniciar el pago con Webpay',
+            usuario: 'sistema',
+          });
         } catch (errorCancelacion) {
           console.error(
             'No se pudo liberar el pedido tras fallar Webpay:',
@@ -931,6 +996,12 @@ exports.crearPedido = async (req, res) => {
         );
       }
     }
+
+    // El correo de recepción se envía en segundo plano: si el proveedor falla,
+    // el pedido igual queda creado y el cliente ve su comprobante.
+    notificarPedidoCreado(idPedido).catch((error) =>
+      console.error('Error al notificar el pedido creado:', error.message)
+    );
 
     return res.status(201).json({
       exito: true,
@@ -1109,6 +1180,7 @@ async function buscarPedidoPorCodigo(codigo) {
       p.total::float8 AS total,
       p.estado,
       p.creado_en,
+      p.actualizado_en,
       COALESCE(
         json_agg(
           json_build_object(
@@ -1135,7 +1207,34 @@ async function buscarPedidoPorCodigo(codigo) {
     [codigo]
   );
 
-  return resultado.rows[0] || null;
+  const pedido = resultado.rows[0] || null;
+  if (!pedido) return null;
+
+  try {
+    const historial = await pool.query(
+      `
+      SELECT estado_anterior, estado_nuevo, motivo, creado_en
+      FROM HISTORIAL_ESTADO_PEDIDO
+      WHERE id_pedido = $1
+      ORDER BY creado_en ASC
+      `,
+      [pedido.id_pedido]
+    );
+
+    pedido.historial = historial.rows.map((fila) => ({
+      anterior: fila.estado_anterior,
+      estado: fila.estado_nuevo,
+      motivo: fila.motivo,
+      fecha: fila.creado_en,
+    }));
+  } catch (error) {
+    // Si la migración todavía no se ejecutó, el seguimiento sigue
+    // funcionando con una línea de tiempo vacía.
+    if (error.code !== '42P01') throw error;
+    pedido.historial = [];
+  }
+
+  return pedido;
 }
 
 exports.obtenerPedidoPorCodigo = async (req, res) => {
@@ -1158,6 +1257,44 @@ exports.obtenerPedidoPorCodigo = async (req, res) => {
 /* ------------------------------------------------------------------ */
 /* Panel interno: listado, estados y configuración                    */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Pedidos creados después de una marca de tiempo. El panel lo consulta cada
+ * pocos segundos para avisar de un pedido nuevo con sonido y un banner, sin
+ * importar para qué fecha de entrega sea.
+ */
+exports.listarNuevosPedidos = async (req, res) => {
+  try {
+    const desde = texto(req.query.desde);
+    const marca = desde && !Number.isNaN(Date.parse(desde)) ? desde : null;
+
+    if (!marca) {
+      return res.status(200).json({ exito: true, pedidos: [] });
+    }
+
+    const resultado = await pool.query(
+      `
+      SELECT
+        id_pedido,
+        codigo,
+        nombre_cliente,
+        total::float8 AS total,
+        to_char(fecha_entrega, 'YYYY-MM-DD') AS fecha_entrega,
+        estado,
+        creado_en
+      FROM PEDIDO
+      WHERE creado_en > $1::timestamptz
+      ORDER BY creado_en DESC
+      LIMIT 20
+      `,
+      [marca]
+    );
+
+    return res.status(200).json({ exito: true, pedidos: resultado.rows });
+  } catch (error) {
+    return responderErrorBaseDatos(res, error);
+  }
+};
 
 exports.listarPedidos = async (req, res) => {
   try {
@@ -1444,7 +1581,20 @@ exports.actualizarEstadoPedido = async (req, res) => {
       [estado, nuevoEstadoPago, idPedido]
     );
 
+    await registrarHistorial(client, [idPedido], {
+      estadoAnterior: pedido.estado,
+      estadoNuevo: estado,
+      motivo: 'Cambio de estado desde el panel',
+      usuario: 'panel',
+    });
+
     await client.query('COMMIT');
+
+    // Solo "confirmado", "listo" y "cancelado" generan correo; el resto de
+    // los avances se ven en la página de seguimiento.
+    notificarCambioEstado(idPedido, estado).catch((error) =>
+      console.error('Error al notificar el cambio de estado:', error.message)
+    );
 
     return res.status(200).json({
       exito: true,
@@ -1609,6 +1759,12 @@ exports.actualizarEstadoPago = async (req, res) => {
     );
 
     await client.query('COMMIT');
+
+    // Aviso de pago para transferencias y pagos manuales; en Webpay el
+    // cliente ya ve la confirmación al volver de Transbank.
+    notificarPago(idPedido).catch((error) =>
+      console.error('Error al notificar el pago:', error.message)
+    );
 
     return res.status(200).json({
       exito: true,

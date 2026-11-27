@@ -2193,6 +2193,60 @@ body.sin-scroll {
   line-height: 1.55;
 }
 
+.exito-aviso {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #E9C39A;
+  border-radius: 10px;
+  background: #FFF6E9;
+  text-align: left;
+}
+
+.exito-aviso strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #8A4B16;
+  font-size: 13px;
+}
+
+.exito-aviso p {
+  margin: 0;
+  color: #6B4F16;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.exito-aviso-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.exito-aviso-acciones .btn-secundario {
+  flex: 1 1 120px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.exito-correo {
+  margin: 0 0 16px;
+  color: var(--color-texto-suave);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.exito-correo strong {
+  color: var(--color-primario-oscuro);
+}
+
+.exito-seguimiento {
+  display: block;
+  margin-bottom: 10px;
+  text-align: center;
+  text-decoration: none;
+}
+
 /* ============================================================
    TOAST
    ============================================================ */

@@ -221,6 +221,63 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_pedido_webpay_orden ON PEDIDO(webpay_orden_compra);
 CREATE INDEX IF NOT EXISTS idx_pedido_webpay_pendiente ON PEDIDO(metodo_pago, estado_pago, creado_en);
 
+-- Notificaciones por correo y seguimiento del pedido
+ALTER TABLE PEDIDO ADD COLUMN IF NOT EXISTS email_confirmacion_enviado_en TIMESTAMPTZ;
+ALTER TABLE PEDIDO ADD COLUMN IF NOT EXISTS email_pago_enviado_en TIMESTAMPTZ;
+ALTER TABLE PEDIDO ADD COLUMN IF NOT EXISTS ultimo_estado_notificado VARCHAR(20);
+
+CREATE TABLE IF NOT EXISTS HISTORIAL_ESTADO_PEDIDO (
+    id_historial SERIAL PRIMARY KEY,
+    id_pedido INT NOT NULL REFERENCES PEDIDO(id_pedido) ON DELETE CASCADE,
+    estado_anterior VARCHAR(20),
+    estado_nuevo VARCHAR(20) NOT NULL,
+    motivo TEXT,
+    usuario VARCHAR(30) DEFAULT 'sistema',
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE HISTORIAL_ESTADO_PEDIDO
+    ADD COLUMN IF NOT EXISTS estado_anterior VARCHAR(20);
+ALTER TABLE HISTORIAL_ESTADO_PEDIDO
+    ADD COLUMN IF NOT EXISTS estado_nuevo VARCHAR(20);
+ALTER TABLE HISTORIAL_ESTADO_PEDIDO
+    ADD COLUMN IF NOT EXISTS motivo TEXT;
+ALTER TABLE HISTORIAL_ESTADO_PEDIDO
+    ADD COLUMN IF NOT EXISTS usuario VARCHAR(30) DEFAULT 'sistema';
+
+CREATE INDEX IF NOT EXISTS idx_historial_pedido
+    ON HISTORIAL_ESTADO_PEDIDO(id_pedido, creado_en);
+
+CREATE TABLE IF NOT EXISTS NOTIFICACION_CORREO (
+    id_notificacion SERIAL PRIMARY KEY,
+    id_pedido INT NOT NULL REFERENCES PEDIDO(id_pedido) ON DELETE CASCADE,
+    tipo VARCHAR(40) NOT NULL,
+    destinatario VARCHAR(150) NOT NULL,
+    asunto VARCHAR(200) NOT NULL,
+    estado VARCHAR(20) NOT NULL
+        CHECK (estado IN ('enviado', 'omitido', 'error')),
+    detalle TEXT,
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notificacion_pedido
+    ON NOTIFICACION_CORREO(id_pedido, creado_en);
+
+-- Pedidos existentes: se registra su estado actual en la bitácora.
+INSERT INTO HISTORIAL_ESTADO_PEDIDO
+    (id_pedido, estado_anterior, estado_nuevo, motivo, usuario, creado_en)
+SELECT
+    p.id_pedido,
+    NULL,
+    p.estado,
+    'Estado registrado al migrar el seguimiento del pedido',
+    'sistema',
+    COALESCE(p.actualizado_en, p.creado_en)
+FROM PEDIDO p
+WHERE NOT EXISTS (
+    SELECT 1 FROM HISTORIAL_ESTADO_PEDIDO h WHERE h.id_pedido = p.id_pedido
+);
+
 -- CATEGORÍAS
 INSERT INTO CATEGORIA (id_categoria, nombre) VALUES
 (5, 'Masas'),

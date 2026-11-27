@@ -29,11 +29,31 @@
     </div>
     <div class="admin-header-acciones">
       <a class="admin-link" href="/">Ver tienda</a>
+      <button
+        class="admin-link admin-sonido"
+        id="btn-sonido"
+        type="button"
+        aria-pressed="true"
+        title="Activar o silenciar el aviso de pedidos nuevos"
+      >
+        Sonido: activado
+      </button>
       <button class="cart-btn" id="btn-refrescar" type="button">Actualizar</button>
     </div>
   </header>
 
   <main class="container admin-container">
+    <div class="admin-alerta" id="admin-alerta" role="status" aria-live="polite" hidden>
+      <span class="admin-alerta-icono" aria-hidden="true">🔔</span>
+      <p id="admin-alerta-texto"></p>
+      <div class="admin-alerta-acciones">
+        <button class="admin-link" id="btn-alerta-ver" type="button">Ver pedidos</button>
+        <button class="admin-link" id="btn-alerta-cerrar" type="button">
+          Cerrar aviso
+        </button>
+      </div>
+    </div>
+
     <nav class="admin-tabs" role="tablist" aria-label="Secciones del panel">
       <button
         class="admin-tab activo"

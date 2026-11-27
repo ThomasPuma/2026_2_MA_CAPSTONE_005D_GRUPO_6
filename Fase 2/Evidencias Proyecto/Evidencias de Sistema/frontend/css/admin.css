@@ -1116,3 +1116,100 @@ body.modal-abierto {
     padding-top: 0;
   }
 }
+
+/* ============================================================
+   Aviso de pedidos nuevos
+   ============================================================ */
+
+.admin-sonido {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-sonido[aria-pressed='false'] {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.admin-alerta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  border: 1px solid #e9c39a;
+  border-radius: 12px;
+  background: #fff6e9;
+  box-shadow: 0 10px 24px -18px rgba(122, 75, 46, 0.6);
+  animation: adminAlertaEntrada 240ms ease;
+}
+
+.admin-alerta[hidden] {
+  display: none;
+}
+
+.admin-alerta p {
+  flex: 1 1 220px;
+  margin: 0;
+  font-weight: 700;
+  color: #8a4b16;
+}
+
+.admin-alerta-icono {
+  font-size: 1.3rem;
+}
+
+.admin-alerta-acciones {
+  display: flex;
+  gap: 10px;
+}
+
+.pedido-card--nuevo {
+  border-color: #dfae6a;
+  box-shadow: 0 0 0 2px rgba(223, 174, 106, 0.35), var(--sombra-card);
+  animation: pedidoNuevoPulso 1.4s ease-in-out 2;
+}
+
+@keyframes adminAlertaEntrada {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pedidoNuevoPulso {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(223, 174, 106, 0.35), var(--sombra-card);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(223, 174, 106, 0.55), var(--sombra-card);
+  }
+}
+
+.admin-alerta .admin-link {
+  padding: 6px 14px;
+  border: 1px solid #e0b78a;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--color-primario-oscuro);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.admin-alerta .admin-link:hover {
+  background: #fff8ee;
+  border-color: #c98b4b;
+}

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seguimiento de pedido — Matteo Masas</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Revisa el estado de tu pedido en Matteo Masas con el código de seguimiento.">
+  <meta name="theme-color" content="#FBF5EA">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..700&amp;family=Nunito+Sans:wght@300..800&amp;display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/seguimiento.css">
+</head>
+<body class="pagina-seguimiento">
+
+  <header class="main-header site-header">
+    <div class="header-inner">
+      <a class="logo" href="/" aria-label="Matteo Masas - Inicio">
+        <img
+          class="logo-img"
+          src="/images/logomatteomasas.png"
+          alt="Matteo Masas - Amasandería Tradicional"
+        >
+        <span class="logo-texto">
+          <span class="logo-nombre">Matteo Masas</span>
+          <span class="logo-tagline">Amasandería artesanal</span>
+        </span>
+      </a>
+
+      <a class="btn-secundario seg-volver" href="/">Volver a la tienda</a>
+    </div>
+  </header>
+
+  <main class="container seg-main">
+    <section class="seg-intro" aria-labelledby="seg-titulo">
+      <span class="seccion-etiqueta">Seguimiento</span>
+      <h1 id="seg-titulo">¿Cómo va tu pedido?</h1>
+      <p>
+        Ingresa el código que recibiste al confirmar tu pedido. Se actualiza
+        automáticamente cada vez que la dueña avanza su estado.
+      </p>
+
+      <form class="seg-form" id="seg-form" novalidate>
+        <label class="sr-only" for="seg-codigo-input">Código de pedido</label>
+        <input
+          id="seg-codigo-input"
+          name="codigo"
+          type="text"
+          placeholder="Ej: MM-8K3P2"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          maxlength="24"
+          required
+        >
+        <button class="btn-primario btn-auto" type="submit">Buscar pedido</button>
+      </form>
+
+      <p class="seg-mensaje seg-error" id="seg-error" role="alert" hidden></p>
+      <p class="seg-mensaje seg-cargando" id="seg-cargando" hidden>
+        Buscando tu pedido…
+      </p>
+    </section>
+
+    <section id="seg-resultado" class="seg-resultado" hidden aria-live="polite">
+      <header class="seg-cabecera">
+        <div>
+          <span class="seccion-etiqueta">Pedido</span>
+          <h2 id="seg-codigo">—</h2>
+        </div>
+        <span class="seg-estado" id="seg-estado">—</span>
+      </header>
+
+      <div class="seg-aviso" id="seg-aviso" hidden></div>
+
+      <ol class="seg-linea" id="seg-linea" aria-label="Estados del pedido"></ol>
+
+      <div class="seg-grid">
+        <article class="seg-card">
+          <h3>Entrega</h3>
+          <p id="seg-entrega">—</p>
+          <p class="seg-suave" id="seg-fecha"></p>
+        </article>
+        <article class="seg-card">
+          <h3>Pago</h3>
+          <p id="seg-pago">—</p>
+          <p class="seg-suave" id="seg-total"></p>
+        </article>
+      </div>
+
+      <article class="seg-card">
+        <h3>Productos</h3>
+        <ul class="seg-items" id="seg-items"></ul>
+        <p class="seg-total" id="seg-total-pedido"></p>
+      </article>
+
+      <p class="seg-actualizacion" id="seg-actualizacion"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container seg-footer">
+      <p>Matteo Masas · Amasandería artesanal por encargo</p>
+      <p class="seg-suave">
+        ¿Necesitas ayuda? Escríbenos por los canales de contacto de la tienda.
+      </p>
+    </div>
+  </footer>
+
+  <script src="/js/seguimiento.js"></script>
+</body>
+</html>

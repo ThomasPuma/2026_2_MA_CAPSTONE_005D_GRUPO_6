@@ -623,9 +623,31 @@
             <strong id="exito-codigo">—</strong>
           </div>
 
+          <div class="exito-aviso" id="exito-aviso-codigo" hidden>
+            <strong>Guarda tu código antes de cerrar</strong>
+            <p>
+              No nos dejaste un correo, así que este código es la única forma
+              de consultar el estado de tu pedido.
+            </p>
+            <div class="exito-aviso-acciones">
+              <button class="btn-secundario" id="btn-copiar-codigo" type="button">
+                Copiar código
+              </button>
+              <button class="btn-secundario" id="btn-codigo-guardado" type="button">
+                Ya lo guardé
+              </button>
+            </div>
+          </div>
+
+          <p class="exito-correo" id="exito-correo" hidden></p>
+
           <div class="exito-detalle" id="exito-detalle"></div>
 
           <p class="exito-nota" id="exito-nota-pago"></p>
+
+          <a class="btn-secundario exito-seguimiento" id="btn-seguimiento" href="/seguimiento">
+            Ver seguimiento de mi pedido
+          </a>
 
           <button class="btn-primario" id="btn-nuevo-pedido" type="button">
             Hacer otro pedido

@@ -56,11 +56,34 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/admin.html'));
 });
 
+// Seguimiento público de un pedido por código.
+app.get('/seguimiento', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/seguimiento.html'));
+});
+
+app.get('/seguimiento/:codigo', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/seguimiento.html'));
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor de Matteo Masas escuchando en http://localhost:${PORT}`);
 
   if (!process.env.ADMIN_KEY) {
     console.warn('⚠️  ADMIN_KEY no está definida: el panel /admin quedará bloqueado.');
+  }
+
+  const proveedorCorreo = process.env.RESEND_API_KEY
+    ? 'Resend'
+    : process.env.SMTP_HOST
+      ? 'SMTP'
+      : null;
+
+  if (proveedorCorreo) {
+    console.log(`Correo transaccional habilitado con ${proveedorCorreo}.`);
+  } else {
+    console.warn(
+      'Aviso: sin RESEND_API_KEY ni SMTP_HOST los correos de pedido se omiten.'
+    );
   }
 
   const webpay = obtenerConfiguracionWebpay();

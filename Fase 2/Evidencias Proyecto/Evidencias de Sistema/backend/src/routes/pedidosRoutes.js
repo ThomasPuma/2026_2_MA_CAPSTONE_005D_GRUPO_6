@@ -21,6 +21,7 @@ router.get('/codigo/:codigo', limiteCodigo.middleware, pedidosController.obtener
 router.post('/', limitePedidos.middleware, pedidosController.crearPedido);
 
 /* Rutas del panel interno */
+router.get('/alertas', requireAdmin, pedidosController.listarNuevosPedidos);
 router.get('/configuracion', requireAdmin, pedidosController.obtenerConfiguracionAdmin);
 router.put('/configuracion', requireAdmin, pedidosController.actualizarConfiguracion);
 router.patch('/:id/pago', requireAdmin, pedidosController.actualizarEstadoPago);

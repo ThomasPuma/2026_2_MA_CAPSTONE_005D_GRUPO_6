@@ -7,6 +7,8 @@
   const API_PEDIDOS = '/api/pedidos';
   const STORAGE_KEY = 'matteoMasasCarritoV1';
   const STORAGE_CHECKOUT_KEY = 'matteoMasasCheckoutV1';
+  const STORAGE_EMAIL_KEY = 'matteoMasasEmailPedidoV1';
+  const STORAGE_CODIGO_PREFIX = 'matteoMasasCodigoGuardado_';
 
   const NOMBRES_DIA = [
     'domingo',
@@ -29,6 +31,9 @@
   let config = null;
   let dias = [];
   let ultimoPedido = null;
+  // Recuerda si el comprobante está abierto y el cliente aún no confirmó que
+  // guardó su código (solo aplica cuando no dejó correo).
+  let avisoCodigoPendiente = false;
   let pagoWebpay = {
     habilitado: false,
     ambiente: 'integration',
@@ -179,6 +184,18 @@
       if (evento.key === 'Escape' && $('cart-drawer')?.classList.contains('abierto')) {
         cerrarCarrito();
       }
+    });
+
+    $('btn-copiar-codigo')?.addEventListener('click', copiarCodigoPedido);
+    $('btn-codigo-guardado')?.addEventListener('click', marcarCodigoGuardado);
+
+    // Solo se muestra el aviso si el cliente no dejó correo y el comprobante
+    // sigue abierto.
+    window.addEventListener('beforeunload', (evento) => {
+      if (!avisoCodigoPendiente) return;
+      evento.preventDefault();
+      evento.returnValue = '';
+      return '';
     });
   }
 
@@ -1967,6 +1984,9 @@
       // Cualquier pedido con cobro Webpay (pago completo o abono) debe ir a
       // la pasarela. El carrito NO se vacía hasta que Transbank confirme.
       if (resultado.pago) {
+        // Se recuerda el correo porque al volver de Webpay la consulta
+        // pública no incluye datos personales.
+        guardarEmailPedido(carga.email);
         redirigirAWebpay(resultado.pago);
         return;
       }
@@ -1978,6 +1998,7 @@
       }
 
       ultimoPedido = resultado.pedido;
+      guardarEmailPedido(resultado.pedido?.email || carga.email);
       items = [];
       refrescarCarrito();
       limpiarSeleccionEntrega();
@@ -2179,10 +2200,129 @@
         : 'La dueña se contactará contigo para confirmar el pedido.';
 
     $('exito-nota-pago').textContent = `${notaPago} ${cierre}`;
+
+    actualizarAvisoExito(pedido);
+  }
+
+  /**
+   * Ajusta el comprobante según el correo del cliente:
+   *  - Con correo: confirma que el código se envió y muestra el seguimiento.
+   *  - Sin correo: pide guardar el código y ofrece copiarlo.
+   */
+  function actualizarAvisoExito(pedido) {
+    if (!pedido || !pedido.codigo) return;
+
+    const codigo = String(pedido.codigo).trim();
+    const email = String(pedido.email || leerEmailPedido() || '').trim();
+    const aviso = $('exito-aviso-codigo');
+    const correo = $('exito-correo');
+    const enlace = $('btn-seguimiento');
+
+    if (enlace) {
+      enlace.href = `/seguimiento/${encodeURIComponent(codigo)}`;
+    }
+
+    if (email) {
+      avisoCodigoPendiente = false;
+      if (aviso) aviso.hidden = true;
+
+      if (correo) {
+        correo.hidden = false;
+        correo.innerHTML = `Enviamos tu código y el enlace de seguimiento a <strong>${escaparHtml(
+          mascararEmail(email)
+        )}</strong>.`;
+      }
+
+      return;
+    }
+
+    if (correo) correo.hidden = true;
+
+    const guardado = Boolean(leerCodigoGuardado(codigo));
+    avisoCodigoPendiente = !guardado;
+
+    if (aviso) aviso.hidden = guardado;
+  }
+
+  function guardarEmailPedido(email) {
+    try {
+      localStorage.setItem(STORAGE_EMAIL_KEY, String(email || ''));
+    } catch (_) {
+      // El navegador puede bloquear localStorage; no es crítico.
+    }
+  }
+
+  function leerEmailPedido() {
+    try {
+      return localStorage.getItem(STORAGE_EMAIL_KEY) || '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function leerCodigoGuardado(codigo) {
+    try {
+      return localStorage.getItem(STORAGE_CODIGO_PREFIX + codigo) === '1';
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function mascararEmail(email) {
+    const [usuario, dominio] = String(email).split('@');
+
+    if (!usuario || !dominio) return email;
+
+    const visibles = usuario.slice(0, 2);
+    const ocultos = '*'.repeat(Math.max(usuario.length - 2, 2));
+    return `${visibles}${ocultos}@${dominio}`;
+  }
+
+  async function copiarCodigoPedido() {
+    const codigo = ($('exito-codigo')?.textContent || '').trim();
+
+    if (!codigo || codigo === '—') return;
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(codigo);
+      } else {
+        const campo = document.createElement('textarea');
+        campo.value = codigo;
+        campo.setAttribute('readonly', '');
+        campo.style.position = 'fixed';
+        campo.style.opacity = '0';
+        document.body.appendChild(campo);
+        campo.select();
+        document.execCommand('copy');
+        document.body.removeChild(campo);
+      }
+
+      mostrarToast('Código copiado. Guárdalo en un lugar seguro.');
+    } catch (_) {
+      mostrarToast(`Tu código es ${codigo}. Anótalo antes de cerrar.`);
+    }
+  }
+
+  function marcarCodigoGuardado() {
+    const codigo = ($('exito-codigo')?.textContent || '').trim();
+
+    if (codigo && codigo !== '—') {
+      try {
+        localStorage.setItem(STORAGE_CODIGO_PREFIX + codigo, '1');
+      } catch (_) {
+        // Sin localStorage el aviso se oculta igual en esta sesión.
+      }
+    }
+
+    avisoCodigoPendiente = false;
+    if ($('exito-aviso-codigo')) $('exito-aviso-codigo').hidden = true;
+    mostrarToast('Listo. Puedes consultar tu pedido cuando quieras.');
   }
 
   function hacerOtroPedido() {
     ultimoPedido = null;
+    avisoCodigoPendiente = false;
     $('checkout-form')?.reset();
     mostrarAvisoPago('');
     limpiarDatosCheckout();

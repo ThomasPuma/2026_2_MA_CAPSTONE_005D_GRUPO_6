@@ -87,6 +87,15 @@
   let productosCargados = false;
   let productoEditando = null;
 
+  /* Aviso de pedidos nuevos: sonido, banner y resaltado en la lista. */
+  const CLAVE_SONIDO = 'matteoAdminSonido';
+  let ultimaAlertaISO = new Date().toISOString();
+  let revisandoAlertas = false;
+  let idsNuevos = new Set();
+  let pedidosNuevosRecientes = [];
+  let sonidoActivo = leerPreferenciaSonido();
+  let contextoAudio = null;
+
   const $ = (id) => document.getElementById(id);
 
   document.addEventListener('DOMContentLoaded', iniciar);
@@ -144,8 +153,19 @@
       }
     });
 
+    $('btn-sonido').addEventListener('click', alternarSonido);
+    $('btn-alerta-cerrar').addEventListener('click', () => cerrarAlertaNuevos());
+    $('btn-alerta-ver').addEventListener('click', irANuevosPedidos);
+
+    // El navegador exige un gesto del usuario para habilitar el audio.
+    document.addEventListener('pointerdown', iniciarAudio, { once: true });
+
+    actualizarBotonSonido();
     cargarTodo();
-    setInterval(actualizarPedidosAutomaticamente, INTERVALO_ACTUALIZACION_MS);
+    setInterval(() => {
+      actualizarPedidosAutomaticamente();
+      revisarNuevosPedidos();
+    }, INTERVALO_ACTUALIZACION_MS);
   }
 
   function actualizarPedidosAutomaticamente() {
@@ -189,6 +209,167 @@
     aviso.textContent = `Sin conexión. Última sincronización: ${
       ultimaSincronizacion ? formatearHora(ultimaSincronizacion) : 'nunca'
     }.`;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Aviso de pedidos nuevos                                            */
+  /* ------------------------------------------------------------------ */
+
+  function leerPreferenciaSonido() {
+    try {
+      return localStorage.getItem(CLAVE_SONIDO) !== '0';
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function iniciarAudio() {
+    if (contextoAudio) return;
+
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+
+    try {
+      contextoAudio = new Ctx();
+    } catch (_) {
+      contextoAudio = null;
+    }
+  }
+
+  function reproducirAviso() {
+    if (!sonidoActivo) return;
+
+    iniciarAudio();
+    if (!contextoAudio) return;
+
+    const contexto = contextoAudio;
+
+    if (contexto.state === 'suspended') {
+      contexto.resume().catch(() => {});
+    }
+
+    const ahora = contexto.currentTime;
+
+    // Dos notas cortas, como un timbre de mostrador.
+    [880, 1174.66].forEach((frecuencia, indice) => {
+      const inicio = ahora + indice * 0.18;
+      const oscilador = contexto.createOscillator();
+      const ganancia = contexto.createGain();
+
+      oscilador.type = 'sine';
+      oscilador.frequency.setValueAtTime(frecuencia, inicio);
+      ganancia.gain.setValueAtTime(0.0001, inicio);
+      ganancia.gain.exponentialRampToValueAtTime(0.22, inicio + 0.02);
+      ganancia.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.16);
+
+      oscilador.connect(ganancia).connect(contexto.destination);
+      oscilador.start(inicio);
+      oscilador.stop(inicio + 0.18);
+    });
+  }
+
+  function actualizarBotonSonido() {
+    const boton = $('btn-sonido');
+    if (!boton) return;
+
+    boton.setAttribute('aria-pressed', String(sonidoActivo));
+    boton.textContent = sonidoActivo
+      ? 'Sonido: activado'
+      : 'Sonido: desactivado';
+  }
+
+  function alternarSonido() {
+    sonidoActivo = !sonidoActivo;
+
+    try {
+      localStorage.setItem(CLAVE_SONIDO, sonidoActivo ? '1' : '0');
+    } catch (_) {
+      // Sin localStorage la preferencia dura hasta recargar.
+    }
+
+    actualizarBotonSonido();
+
+    if (sonidoActivo) reproducirAviso();
+  }
+
+  async function revisarNuevosPedidos() {
+    if (!adminKey || pidiendoClave || revisandoAlertas) return;
+
+    revisandoAlertas = true;
+
+    try {
+      const datos = await apiFetch(
+        `/alertas?desde=${encodeURIComponent(ultimaAlertaISO)}`
+      );
+      const nuevos = Array.isArray(datos.pedidos) ? datos.pedidos : [];
+
+      if (nuevos.length === 0) return;
+
+      const masReciente = nuevos.reduce((maximo, pedido) => {
+        const marca = new Date(pedido.creado_en).getTime();
+        return Number.isFinite(marca) && marca > maximo ? marca : maximo;
+      }, 0);
+
+      if (masReciente) ultimaAlertaISO = new Date(masReciente).toISOString();
+
+      nuevos.forEach((pedido) => idsNuevos.add(Number(pedido.id_pedido)));
+      mostrarAlertaNuevos(nuevos);
+    } catch (_) {
+      // Un fallo del aviso no debe interrumpir el trabajo del panel.
+    } finally {
+      revisandoAlertas = false;
+    }
+  }
+
+  function mostrarAlertaNuevos(nuevos) {
+    const total = nuevos.length;
+    const codigos = nuevos.map((pedido) => pedido.codigo).join(', ');
+
+    pedidosNuevosRecientes = nuevos;
+
+    $('admin-alerta-texto').textContent =
+      total === 1
+        ? `Pedido nuevo: ${codigos}`
+        : `${total} pedidos nuevos: ${codigos}`;
+
+    $('admin-alerta').hidden = false;
+    document.title =
+      total === 1
+        ? '(1) Pedido nuevo — Administración'
+        : `(${total}) Pedidos nuevos — Administración`;
+
+    reproducirAviso();
+
+    // Si el pedido es de la fecha que se está mirando, se refresca la lista.
+    const fechaVista = $('filtro-fecha').value;
+    if (nuevos.some((pedido) => pedido.fecha_entrega === fechaVista)) {
+      cargarPedidos(true);
+    } else {
+      renderizarPedidos();
+    }
+  }
+
+  function cerrarAlertaNuevos(limpiar = true) {
+    $('admin-alerta').hidden = true;
+    document.title = 'Administración - Matteo Masas';
+
+    if (!limpiar) return;
+
+    idsNuevos.clear();
+    pedidosNuevosRecientes = [];
+    renderizarPedidos();
+  }
+
+  function irANuevosPedidos() {
+    cambiarVista('pedidos');
+
+    const primero = pedidosNuevosRecientes[0];
+    if (primero?.fecha_entrega) {
+      $('filtro-fecha').value = primero.fecha_entrega;
+    }
+
+    cerrarAlertaNuevos(false);
+    cargarPedidos();
   }
 
   function formatearHora(fecha) {
@@ -514,8 +695,10 @@
           .filter(Boolean)
           .join('');
 
+        const esNuevo = idsNuevos.has(Number(pedido.id_pedido));
+
         return `
-          <article class="pedido-card" data-id="${pedido.id_pedido}">
+          <article class="pedido-card${esNuevo ? ' pedido-card--nuevo' : ''}" data-id="${pedido.id_pedido}">
             <header class="pedido-card-header">
               <div class="pedido-card-titulo">
                 <strong>${escaparHtml(pedido.codigo)}</strong>

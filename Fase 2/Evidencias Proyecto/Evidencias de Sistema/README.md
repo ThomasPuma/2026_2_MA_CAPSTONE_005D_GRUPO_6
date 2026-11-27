@@ -27,6 +27,14 @@ mantiene stock, prepara cada pedido según su capacidad de trabajo diaria.
   - pago en efectivo, tarjeta o transferencia,
   - indicaciones especiales.
 - Código único de pedido para seguimiento.
+- **Seguimiento público del pedido** en `/seguimiento/:codigo`: línea de tiempo
+  con la fecha de cada estado, productos, entrega y pago. Se actualiza solo
+  cada 20 segundos mientras la página está abierta.
+- **Correo de confirmación** al cliente cuando deja su correo, con el código y
+  el enlace de seguimiento. Los cambios de estado importantes (confirmado,
+  listo y cancelado) también se avisan por correo.
+- **Aviso de pedido nuevo en el panel**: banner, sonido y resaltado del pedido,
+  con opción de silenciar el sonido.
 - Validación de cupo en el servidor con bloqueo de transacción para evitar
   sobreventa de cupos.
 - Protección contra reenvíos: cada solicitud lleva una clave única; si se
@@ -84,6 +92,30 @@ El TLS se activa solo al usar `DATABASE_URL`. Hay una plantilla completa en
 `ADMIN_KEY` protege el panel interno y es obligatoria. Si no está definida, el
 panel y la API privada responden 503 y no quedan abiertos. Usa una clave larga
 y no la compartas en el código ni en capturas.
+
+### Correo transaccional (opcional)
+
+Los correos de confirmación y de cambio de estado se envían con **Resend** o
+por **SMTP**. Si no configuras ninguno, la tienda funciona igual: los envíos
+quedan registrados como `omitido` en la tabla `NOTIFICACION_CORREO`.
+
+```env
+# Opción 1: Resend (HTTPS)
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
+
+# Opción 2: SMTP (Gmail con clave de aplicación, Brevo, etc.)
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_SECURE=false
+# SMTP_USER=tu_correo@gmail.com
+# SMTP_PASS=tu_clave_de_aplicacion
+
+# Remitente que verá el cliente
+EMAIL_FROM=Matteo Masas <no-reply@matteomasas.cl>
+```
+
+`PUBLIC_BASE_URL` se usa para armar el enlace de seguimiento que va en el
+correo. En producción debe ser la URL pública con HTTPS.
 
 También puedes crear la base desde cero con el archivo
 [`matteo-masas-db.sql`](matteo-masas-db.sql):
@@ -145,8 +177,36 @@ y sus variables de entorno. Ese archivo fija el **Root Directory** en
 
 - Tienda: <http://localhost:3000>
 - Panel interno: <http://localhost:3000/admin>
+- Seguimiento de un pedido: <http://localhost:3000/seguimiento>
 
 El panel pedirá la clave configurada en `ADMIN_KEY`.
+
+## Seguimiento y notificaciones
+
+El cliente puede revisar su pedido en `/seguimiento/<código>` sin iniciar
+sesión. La página muestra una línea de tiempo construida con la tabla
+`HISTORIAL_ESTADO_PEDIDO`, que guarda cada transición con su fecha, el estado
+anterior, el motivo y quién la realizó. La consulta se refresca cada 20
+segundos y solo expone los campos públicos del pedido (nunca nombre, teléfono,
+correo ni dirección).
+
+Correos que se envían:
+
+| Momento | Cuándo | Contenido |
+| --- | --- | --- |
+| Recepción | Al crear el pedido, si dejó correo | Código, productos, total y enlace de seguimiento |
+| Confirmado | `pendiente` → `confirmado` | Aviso de que el pedido quedó agendado |
+| Listo | `en_preparacion` → `listo` | Aviso de retiro o despacho |
+| Cancelado | Cualquier cancelación | Aviso de cancelación y liberación del cupo |
+| Pago | Al registrar un pago manual o una transferencia | Monto pagado y saldo pendiente |
+
+Los pagos con Webpay no generan un correo adicional porque el cliente ve la
+confirmación en pantalla al volver de Transbank. Cada envío queda auditado en
+`NOTIFICACION_CORREO` con su estado (`enviado`, `omitido` o `error`).
+
+El panel avisa los pedidos nuevos con un banner, un sonido y el resaltado de la
+tarjeta. El sonido se puede silenciar con el botón «Sonido» del encabezado y
+la preferencia se guarda en el navegador.
 
 ## API principal
 
@@ -162,6 +222,7 @@ El panel pedirá la clave configurada en `ADMIN_KEY`.
 | POST | `/api/productos` | Admin | Crear producto con sus formatos |
 | PUT | `/api/productos/:id` | Admin | Editar producto y formatos |
 | PATCH | `/api/productos/:id/estado` | Admin | Activar o desactivar producto |
+| GET | `/api/pedidos/alertas?desde=ISO` | Admin | Pedidos creados después de una marca de tiempo (aviso de pedidos nuevos) |
 | GET | `/api/pedidos?fecha=YYYY-MM-DD` | Admin | Pedidos del día y resumen |
 | PATCH | `/api/pedidos/:id/estado` | Admin | Cambiar estado (solo transiciones válidas) |
 | PATCH | `/api/pedidos/:id/pago` | Admin | Registrar abono, saldo o pago manual |
