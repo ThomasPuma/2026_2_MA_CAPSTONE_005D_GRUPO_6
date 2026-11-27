@@ -3,11 +3,13 @@
  *
  * El proveedor se elige por configuración, en este orden:
  *   1. Resend (RESEND_API_KEY) por HTTPS.
- *   2. SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS) con nodemailer.
- *   3. Sin proveedor: el correo se omite y solo se registra en el log.
+ *   2. Brevo (BREVO_API_KEY) por HTTPS.
+ *   3. SendGrid (SENDGRID_API_KEY) por HTTPS.
+ *   4. SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS) con nodemailer.
+ *   5. Sin proveedor: el correo se omite y solo se registra en el log.
  *
- * El remitente se define en EMAIL_FROM. Si no está configurado, se usa un
- * valor genérico para que el resto del sistema siga funcionando.
+ * Las APIs HTTP son la opción recomendada en Render Free, que bloquea los
+ * puertos SMTP 25, 465 y 587.
  */
 const nodemailer = require('nodemailer');
 
@@ -19,7 +21,12 @@ function variable(nombre) {
 }
 
 function proveedorConfigurado() {
-  return Boolean(variable('RESEND_API_KEY') || variable('SMTP_HOST'));
+  return Boolean(
+    variable('RESEND_API_KEY') ||
+      variable('BREVO_API_KEY') ||
+      variable('SENDGRID_API_KEY') ||
+      variable('SMTP_HOST')
+  );
 }
 
 function remitente() {
@@ -28,6 +35,142 @@ function remitente() {
     variable('SMTP_FROM') ||
     'Matteo Masas <no-reply@matteomasas.cl>'
   );
+}
+
+function partesRemitente() {
+  const valor = remitente();
+  const coincidencia = valor.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+
+  if (coincidencia) {
+    const nombre = coincidencia[1].replace(/^"|"$/g, '').trim();
+    return {
+      nombre: nombre || 'Matteo Masas',
+      email: coincidencia[2].trim(),
+    };
+  }
+
+  return { nombre: 'Matteo Masas', email: valor };
+}
+
+async function solicitudJson(url, opciones, etiqueta) {
+  const controlador = new AbortController();
+  const temporizador = setTimeout(() => controlador.abort(), 12000);
+
+  try {
+    const respuesta = await fetch(url, { ...opciones, signal: controlador.signal });
+
+    if (!respuesta.ok) {
+      const detalle = await respuesta.text().catch(() => '');
+      throw new Error(
+        `${etiqueta} respondió ${respuesta.status}: ${detalle.slice(0, 300)}`
+      );
+    }
+
+    return await respuesta.json().catch(() => ({}));
+  } finally {
+    clearTimeout(temporizador);
+  }
+}
+
+async function enviarConResend({ to, subject, html, text }) {
+  const datos = await solicitudJson(
+    'https://api.resend.com/emails',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${variable('RESEND_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: remitente(),
+        to: [to],
+        subject,
+        html,
+        text,
+      }),
+    },
+    'Resend'
+  );
+
+  return { estado: 'enviado', proveedor: 'resend', id: datos.id || null };
+}
+
+async function enviarConBrevo({ to, subject, html, text }) {
+  const remitenteCorreo = partesRemitente();
+
+  const datos = await solicitudJson(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      method: 'POST',
+      headers: {
+        'api-key': variable('BREVO_API_KEY'),
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        sender: {
+          name: remitenteCorreo.nombre,
+          email: remitenteCorreo.email,
+        },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html,
+        textContent: text,
+      }),
+    },
+    'Brevo'
+  );
+
+  return {
+    estado: 'enviado',
+    proveedor: 'brevo',
+    id: datos.messageId || null,
+  };
+}
+
+async function enviarConSendgrid({ to, subject, html, text }) {
+  const remitenteCorreo = partesRemitente();
+  const controlador = new AbortController();
+  const temporizador = setTimeout(() => controlador.abort(), 12000);
+
+  try {
+    const respuesta = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${variable('SENDGRID_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        personalizations: [{ to: [{ email: to }] }],
+        from: {
+          email: remitenteCorreo.email,
+          name: remitenteCorreo.nombre,
+        },
+        subject,
+        content: [
+          { type: 'text/plain', value: text },
+          { type: 'text/html', value: html },
+        ],
+      }),
+      signal: controlador.signal,
+    });
+
+    if (!respuesta.ok) {
+      const detalle = await respuesta.text().catch(() => '');
+      throw new Error(
+        `SendGrid respondió ${respuesta.status}: ${detalle.slice(0, 300)}`
+      );
+    }
+
+    // SendGrid responde 202 sin cuerpo.
+    return {
+      estado: 'enviado',
+      proveedor: 'sendgrid',
+      id: respuesta.headers.get('x-message-id') || null,
+    };
+  } finally {
+    clearTimeout(temporizador);
+  }
 }
 
 function crearTransporteSmtp() {
@@ -44,48 +187,12 @@ function crearTransporteSmtp() {
     auth: usuario
       ? { user: usuario, pass: variable('SMTP_PASS') }
       : undefined,
-    // Los proveedores gratuitos a veces demoran unos segundos.
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     socketTimeout: 15000,
   });
 
   return transporteSmtp;
-}
-
-async function enviarConResend({ to, subject, html, text }) {
-  const controlador = new AbortController();
-  const temporizador = setTimeout(() => controlador.abort(), 12000);
-
-  try {
-    const respuesta = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${variable('RESEND_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: remitente(),
-        to: [to],
-        subject,
-        html,
-        text,
-      }),
-      signal: controlador.signal,
-    });
-
-    if (!respuesta.ok) {
-      const detalle = await respuesta.text().catch(() => '');
-      throw new Error(
-        `Resend respondió ${respuesta.status}: ${detalle.slice(0, 300)}`
-      );
-    }
-
-    const datos = await respuesta.json().catch(() => ({}));
-    return { estado: 'enviado', proveedor: 'resend', id: datos.id || null };
-  } finally {
-    clearTimeout(temporizador);
-  }
 }
 
 async function enviarConSmtp({ to, subject, html, text }) {
@@ -98,8 +205,6 @@ async function enviarConSmtp({ to, subject, html, text }) {
     text,
   });
 
-  // En cuentas de prueba de Nodemailer (Ethereal) entrega una URL para ver
-  // el correo enviado; en un proveedor real devuelve null.
   const vistaPrevia = nodemailer.getTestMessageUrl(informacion);
 
   return {
@@ -124,7 +229,7 @@ async function enviarCorreo({ to, subject, html, text }) {
 
   if (!proveedorConfigurado()) {
     console.log(
-      `[correo omitido] "${subject}" para ${destinatario}: falta configurar RESEND_API_KEY o SMTP_HOST.`
+      `[correo omitido] "${subject}" para ${destinatario}: falta configurar un proveedor (RESEND_API_KEY, BREVO_API_KEY, SENDGRID_API_KEY o SMTP_HOST).`
     );
     return {
       estado: 'omitido',
@@ -135,6 +240,14 @@ async function enviarCorreo({ to, subject, html, text }) {
   try {
     if (variable('RESEND_API_KEY')) {
       return await enviarConResend({ to: destinatario, subject, html, text });
+    }
+
+    if (variable('BREVO_API_KEY')) {
+      return await enviarConBrevo({ to: destinatario, subject, html, text });
+    }
+
+    if (variable('SENDGRID_API_KEY')) {
+      return await enviarConSendgrid({ to: destinatario, subject, html, text });
     }
 
     return await enviarConSmtp({ to: destinatario, subject, html, text });

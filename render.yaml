@@ -38,8 +38,12 @@ services:
       - key: PUBLIC_BASE_URL
         sync: false
       # Correo transaccional (código del pedido y avisos de estado).
-      # Si no se configura, los correos se omiten y la tienda sigue igual.
+      # Render Free bloquea SMTP: se usa una API HTTP. Basta con una de estas.
       - key: EMAIL_FROM
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
         sync: false
       - key: RESEND_API_KEY
         sync: false

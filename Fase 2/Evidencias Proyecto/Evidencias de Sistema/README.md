@@ -95,23 +95,34 @@ y no la compartas en el código ni en capturas.
 
 ### Correo transaccional (opcional)
 
-Los correos de confirmación y de cambio de estado se envían con **Resend** o
-por **SMTP**. Si no configuras ninguno, la tienda funciona igual: los envíos
-quedan registrados como `omitido` en la tabla `NOTIFICACION_CORREO`.
+Los correos de confirmación y de cambio de estado se envían por **HTTPS** con
+**Brevo**, **SendGrid** o **Resend**, o por **SMTP** donde el hosting lo permita.
+Si no configuras ninguno, la tienda funciona igual: los envíos quedan
+registrados como `omitido` en la tabla `NOTIFICACION_CORREO`.
+
+> **Render Free bloquea los puertos SMTP** (25, 465 y 587) desde septiembre de
+> 2025. En ese hosting usa una API HTTP; Brevo y SendGrid permiten verificar un
+> remitente sin comprar dominio.
 
 ```env
-# Opción 1: Resend (HTTPS)
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
+# Opción 1: Brevo (remitente verificado, sin dominio propio)
+BREVO_API_KEY=xkeysib-xxxxxxxxxxxxxxxx
 
-# Opción 2: SMTP (Gmail con clave de aplicación, Brevo, etc.)
+# Opción 2: SendGrid (Single Sender Verification, sin dominio)
+# SENDGRID_API_KEY=SG.xxxxxxxxxxxxxxxx
+
+# Opción 3: Resend (requiere dominio verificado para enviar a clientes)
+# RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
+
+# Opción 4: SMTP (solo local o hosting con SMTP habilitado)
 # SMTP_HOST=smtp.gmail.com
 # SMTP_PORT=587
 # SMTP_SECURE=false
 # SMTP_USER=tu_correo@gmail.com
 # SMTP_PASS=tu_clave_de_aplicacion
 
-# Remitente que verá el cliente
-EMAIL_FROM=Matteo Masas <no-reply@matteomasas.cl>
+# Remitente que verá el cliente (debe estar verificado en el proveedor)
+EMAIL_FROM=Matteo Masas <no-reply@tudominio.cl>
 ```
 
 `PUBLIC_BASE_URL` se usa para armar el enlace de seguimiento que va en el

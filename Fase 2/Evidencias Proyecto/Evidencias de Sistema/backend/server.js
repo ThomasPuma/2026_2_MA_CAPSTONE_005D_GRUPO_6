@@ -74,15 +74,25 @@ app.listen(PORT, () => {
 
   const proveedorCorreo = process.env.RESEND_API_KEY
     ? 'Resend'
-    : process.env.SMTP_HOST
-      ? 'SMTP'
-      : null;
+    : process.env.BREVO_API_KEY
+      ? 'Brevo'
+      : process.env.SENDGRID_API_KEY
+        ? 'SendGrid'
+        : process.env.SMTP_HOST
+          ? 'SMTP'
+          : null;
 
   if (proveedorCorreo) {
     console.log(`Correo transaccional habilitado con ${proveedorCorreo}.`);
+
+    if (proveedorCorreo === 'SMTP' && process.env.RENDER) {
+      console.warn(
+        'Aviso: Render Free bloquea los puertos SMTP (25, 465 y 587). Usa una API HTTP (Brevo, SendGrid o Resend) o un plan pagado.'
+      );
+    }
   } else {
     console.warn(
-      'Aviso: sin RESEND_API_KEY ni SMTP_HOST los correos de pedido se omiten.'
+      'Aviso: sin proveedor de correo los avisos de pedido se omiten. Configura BREVO_API_KEY, SENDGRID_API_KEY, RESEND_API_KEY o SMTP_HOST.'
     );
   }
 
