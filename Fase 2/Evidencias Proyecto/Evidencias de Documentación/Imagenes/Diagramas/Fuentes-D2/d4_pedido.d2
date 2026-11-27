@@ -1,14 +1,14 @@
-# Proceso de compra: cliente, servidor y retorno de Webpay
+﻿# Proceso de compra: cliente, servidor y retorno de Webpay
 
 direction: down
 
-cliente: "Cliente · navegador" {
+cliente: "Cliente — navegador" {
   style.border-radius: 8
   a: "Explorar el catálogo: buscar y filtrar"
   b: "Agregar productos y formatos al carrito"
-  c: "Completar nombre y teléfono"
+  c: "Completar nombre, teléfono y correo opcional"
   d: "¿Modalidad de entrega?" {shape: diamond}
-  e: "Elegir dirección en el mapa · tarifa por distancia y zona"
+  e: "Elegir dirección en el mapa — tarifa por distancia y zona"
   f: "Elegir fecha con cupo disponible"
   g: "¿Forma de pago?" {shape: diamond}
   h: "Enviar pedido con clave única"
@@ -17,6 +17,8 @@ cliente: "Cliente · navegador" {
   l: "Retorno automático a la tienda"
   j: "Comprobante con código MM-"
   m: "Carrito conservado para reintentar"
+  n: "Recibir correo con el código y el enlace de seguimiento"
+  o: "Consultar /seguimiento/<código> y ver la línea de tiempo"
 
   a -> b
   b -> c
@@ -25,30 +27,35 @@ cliente: "Cliente · navegador" {
   d -> e: "Despacho a domicilio"
   e -> f
   f -> g
-  g -> h: "Efectivo o tarjeta presencial · solo retiro"
+  g -> h: "Efectivo o tarjeta presencial — solo retiro"
   g -> h: "Transferencia"
-  g -> i: "Tarjeta online · Webpay"
+  g -> i: "Tarjeta online — Webpay"
   i -> k
   k -> l
   l -> j: "Aprobado"
   l -> m: "Rechazado o cancelado"
   h -> j
+  j -> n: "si dejó correo"
+  j -> o: "cuando quiera"
+  n -> o
 }
 
-servidor: "Servidor · POST /api/pedidos" {
+servidor: "Servidor — POST /api/pedidos" {
   style.border-radius: 8
   s1: "Validar datos y reglas de pago"
   s2: "Bloqueo por fecha de entrega"
   s3: "¿Clave de solicitud ya registrada?" {shape: diamond}
   s4: "Devolver el pedido existente sin consumir otro cupo"
   s5: "¿Hay cupo para esa fecha?" {shape: diamond}
-  s6: "409 · sin cupo"
-  s7: "Calcular precios · despacho y abono"
-  s8: "Crear PEDIDO y DETALLE_PEDIDO · COMMIT · cupo reservado"
+  s6: "409 — sin cupo"
+  s7: "Calcular precios — despacho y abono"
+  s8: "Crear PEDIDO y DETALLE_PEDIDO — COMMIT — cupo reservado"
   s9: "¿Requiere cobro con Webpay?" {shape: diamond}
-  s10: "201 · comprobante"
-  s11: "Crear transacción en Transbank · guardar token y URL"
+  s10: "201 — comprobante"
+  s11: "Crear transacción en Transbank — guardar token y URL"
   s12: "Redirigir al formulario de pago"
+  s13: "Registrar estado en HISTORIAL_ESTADO_PEDIDO"
+  s14: "Enviar correo de confirmación en segundo plano"
 
   s1 -> s2
   s2 -> s3
@@ -57,18 +64,20 @@ servidor: "Servidor · POST /api/pedidos" {
   s5 -> s6: "No"
   s5 -> s7: "Sí"
   s7 -> s8
+  s8 -> s13
+  s8 -> s14: "si dejó correo"
   s8 -> s9
   s9 -> s10: "No"
   s9 -> s11: "Sí"
   s11 -> s12
 }
 
-retorno: "Retorno · /api/pagos/webpay/retorno" {
+retorno: "Retorno — /api/pagos/webpay/retorno" {
   style.border-radius: 8
   r1: "¿Respuesta de Transbank?" {shape: diamond}
   r2: "pagado o abono_pagado"
-  r3: "cancelado · cupo liberado"
-  r4: "expirado · cupo liberado"
+  r3: "cancelado — cupo liberado"
+  r4: "expirado — cupo liberado"
 
   r1 -> r2: "Aprobado"
   r1 -> r3: "Rechazado"
@@ -78,5 +87,6 @@ retorno: "Retorno · /api/pagos/webpay/retorno" {
 cliente.h -> servidor.s1
 servidor.s12 -> cliente.i
 servidor.s10 -> cliente.j
+servidor.s14 -> cliente.n: "HTTPS — Brevo / SendGrid / Resend"
 retorno.r2 -> cliente.j
 retorno.r3 -> cliente.m

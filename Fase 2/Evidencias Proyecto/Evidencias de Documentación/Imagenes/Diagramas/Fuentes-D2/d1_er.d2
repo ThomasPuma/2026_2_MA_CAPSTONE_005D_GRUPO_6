@@ -1,5 +1,6 @@
-# Modelo Entidad-Relación · Matteo Masas
+# Modelo Entidad-Relación — Matteo Masas
 # Esquema real: matteo-masas-db.sql y backend/scripts/migrate-pedidos.js
+# Seis tablas de negocio + dos tablas de seguimiento y notificaciones.
 
 direction: right
 
@@ -84,6 +85,9 @@ pedido: PEDIDO {
   webpay_detalle: jsonb
   clave_solicitud: varchar(64) UNIQUE
   huella_solicitud: varchar(64)
+  email_confirmacion_enviado_en: timestamptz
+  email_pago_enviado_en: timestamptz
+  ultimo_estado_notificado: varchar(20)
   notas: text
   subtotal: numeric(10,2) NOT NULL
   costo_despacho: numeric(10,2) NOT NULL
@@ -108,8 +112,33 @@ detalle_pedido: DETALLE_PEDIDO {
   subtotal: numeric(10,2)
 }
 
-categoria.id_categoria -> producto.id_categoria: "1 a N · una categoría agrupa productos"
-producto.id_producto -> presentacion.id_producto: "1 a N · un producto ofrece formatos"
-pedido.id_pedido -> detalle_pedido.id_pedido: "1 a N · cada pedido tiene al menos una línea"
-producto.id_producto -> detalle_pedido.id_producto: "referencia histórica · conserva nombre y precio"
+historial_estado_pedido: HISTORIAL_ESTADO_PEDIDO {
+  shape: sql_table
+  id_historial: int {constraint: primary_key}
+  id_pedido: int {constraint: foreign_key}
+  estado_anterior: varchar(20)
+  estado_nuevo: varchar(20) NOT NULL
+  motivo: text
+  usuario: varchar(30) DEFAULT sistema
+  creado_en: timestamptz
+}
+
+notificacion_correo: NOTIFICACION_CORREO {
+  shape: sql_table
+  id_notificacion: int {constraint: primary_key}
+  id_pedido: int {constraint: foreign_key}
+  tipo: varchar(40) NOT NULL
+  destinatario: varchar(150) NOT NULL
+  asunto: varchar(200) NOT NULL
+  estado: varchar(20) NOT NULL
+  detalle: text
+  creado_en: timestamptz
+}
+
+categoria.id_categoria -> producto.id_categoria: "1 a N — una categoría agrupa productos"
+producto.id_producto -> presentacion.id_producto: "1 a N — un producto ofrece formatos"
+pedido.id_pedido -> detalle_pedido.id_pedido: "1 a N — cada pedido tiene al menos una línea"
+producto.id_producto -> detalle_pedido.id_producto: "referencia histórica — conserva nombre y precio"
 presentacion.id_presentacion -> detalle_pedido.id_presentacion: "referencia histórica"
+pedido.id_pedido -> historial_estado_pedido.id_pedido: "1 a N — bitácora de estados"
+pedido.id_pedido -> notificacion_correo.id_pedido: "1 a N — avisos enviados"
