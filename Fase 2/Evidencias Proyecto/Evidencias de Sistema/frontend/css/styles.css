@@ -483,6 +483,24 @@ button:focus-visible {
   margin-top: 28px;
 }
 
+.hero-seguimiento {
+  margin-top: 14px;
+  color: var(--color-texto-suave);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.hero-seguimiento a {
+  color: var(--color-acento-oscuro);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hero-seguimiento a:hover {
+  color: var(--color-primario-oscuro);
+}
+
 .hero-nota {
   display: grid;
   gap: 4px;
