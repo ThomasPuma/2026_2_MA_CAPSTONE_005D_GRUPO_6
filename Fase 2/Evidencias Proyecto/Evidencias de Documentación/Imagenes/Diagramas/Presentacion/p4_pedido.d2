@@ -1,0 +1,14 @@
+﻿# Proceso de compra — diagrama de secuencia para presentación
+
+shape: sequence_diagram
+
+Cliente -> Servidor: Enviar pedido con clave única
+Servidor -> Servidor: Validar datos, cupo e idempotencia
+Servidor -> Base de datos: Crear PEDIDO, DETALLE e historial
+Servidor -> Correo: Confirmación (si dejó correo)
+Servidor -> Webpay: Crear transacción
+Webpay -> Cliente: Formulario de pago
+Cliente -> Webpay: Pagar o cancelar
+Webpay -> Servidor: Retorno con token
+Servidor -> Base de datos: Actualizar estado del pago
+Servidor -> Cliente: Comprobante y enlace de seguimiento

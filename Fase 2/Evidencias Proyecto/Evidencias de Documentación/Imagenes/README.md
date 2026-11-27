@@ -70,3 +70,7 @@ Capturas de la mejora entregada el 27/11/2026: seguimiento público del pedido, 
 | `Evidencias-QA/seg02_seguimiento_movil.png` | Seguimiento en móvil (390 px), sin desplazamiento horizontal. |
 | `Evidencias-QA/seg03_comprobante_sin_correo.png` | Comprobante de un pedido sin correo: aviso para guardar el código y botones de copia. |
 | `Evidencias-QA/seg04_aviso_pedido_nuevo.png` | Panel con el banner de pedido nuevo, sonido y resaltado de la tarjeta. |
+
+## 🖥️ Diagramas para la presentación
+
+La carpeta `Diagramas/Presentacion/` contiene versiones pensadas para una diapositiva por diagrama (16:9): MER resumido, arquitectura, despliegue, proceso de compra como diagrama de secuencia, panel y las dos máquinas de estados. Incluye un `README.md` con el orden sugerido y las notas de uso.
