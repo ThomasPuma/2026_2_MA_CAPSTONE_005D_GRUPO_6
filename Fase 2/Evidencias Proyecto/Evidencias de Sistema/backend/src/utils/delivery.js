@@ -153,7 +153,7 @@ function calcularDespacho({ subtotal, lat, lng, config = {} }) {
   const kmBase = Math.max(0, numero(config.kmBaseDespacho));
   const tarifaKm = Math.max(0, numero(config.tarifaKmAdicional));
 
-  const gratis = montoGratis > 0 && dentroComuna && subtotal > montoGratis;
+  const gratis = montoGratis > 0 && dentroComuna && subtotal >= montoGratis;
 
   let costoDespacho = 0;
   let kmAdicionales = 0;

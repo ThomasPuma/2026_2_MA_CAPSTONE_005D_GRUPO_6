@@ -21,7 +21,9 @@ CREATE TABLE IF NOT EXISTS PRODUCTO (
     imagen_url VARCHAR(255),
     activo BOOLEAN DEFAULT TRUE,
     grupo VARCHAR(150),
-    variante VARCHAR(100)
+    variante VARCHAR(100),
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW()
 );
 ALTER TABLE PRODUCTO ADD COLUMN IF NOT EXISTS grupo VARCHAR(150);
 ALTER TABLE PRODUCTO ADD COLUMN IF NOT EXISTS variante VARCHAR(100);
@@ -119,11 +121,17 @@ CREATE TABLE IF NOT EXISTS PEDIDO (
     webpay_token VARCHAR(255),
     webpay_orden_compra VARCHAR(64),
     webpay_sesion VARCHAR(64),
+    webpay_url VARCHAR(500),
     webpay_autorizacion VARCHAR(64),
     webpay_tipo_pago VARCHAR(20),
     webpay_cuotas INT,
     webpay_fecha_pago TIMESTAMPTZ,
     webpay_detalle JSONB,
+    clave_solicitud VARCHAR(64) UNIQUE,
+    huella_solicitud VARCHAR(64),
+    email_confirmacion_enviado_en TIMESTAMPTZ,
+    email_pago_enviado_en TIMESTAMPTZ,
+    ultimo_estado_notificado VARCHAR(20),
     notas TEXT,
     subtotal NUMERIC(10, 2) NOT NULL CHECK (subtotal >= 0),
     costo_despacho NUMERIC(10, 2) NOT NULL DEFAULT 0

@@ -49,6 +49,7 @@ detalle_pedido: DETALLE_PEDIDO {
   id_detalle: int {constraint: primary_key}
   id_pedido: int {constraint: foreign_key}
   id_producto: int {constraint: foreign_key}
+  id_presentacion: int {constraint: foreign_key}
   cantidad: int
   subtotal: numeric(10,2)
 }
@@ -74,5 +75,6 @@ categoria.id_categoria -> producto.id_categoria: "1 a N"
 producto.id_producto -> presentacion.id_producto: "1 a N"
 pedido.id_pedido -> detalle_pedido.id_pedido: "1 a N"
 producto.id_producto -> detalle_pedido.id_producto: "referencia histórica"
+presentacion.id_presentacion -> detalle_pedido.id_presentacion: "referencia histórica"
 pedido.id_pedido -> historial_estado_pedido.id_pedido: "1 a N"
 pedido.id_pedido -> notificacion_correo.id_pedido: "1 a N"

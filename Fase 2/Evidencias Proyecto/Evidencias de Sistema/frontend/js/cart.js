@@ -1413,7 +1413,7 @@
     const gratis =
       tarifas.montoDespachoGratis > 0 &&
       dentroComuna &&
-      subtotal > tarifas.montoDespachoGratis;
+      subtotal >= tarifas.montoDespachoGratis;
 
     let kmAdicionales = 0;
     let costoDespacho = 0;

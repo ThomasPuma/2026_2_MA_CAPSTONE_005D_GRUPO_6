@@ -1,4 +1,5 @@
 /* Prueba temporal: verifica que el cupo no se sobrevenda con solicitudes concurrentes. */
+const crypto = require('crypto');
 const pool = require('../src/config/database');
 
 const BASE = 'http://localhost:3000/api';
@@ -38,7 +39,10 @@ async function json(ruta, opciones) {
       json('/pedidos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(carga),
+        body: JSON.stringify({
+          ...carga,
+          clave_solicitud: `test-cupo-${crypto.randomUUID()}`,
+        }),
       })
     )
   );
